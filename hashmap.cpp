@@ -216,4 +216,19 @@ QVector<int> HashMap::bucketSizes() const {
     return sizes;
 }
 
+QVector<QVector<QPair<QString, QString>>> HashMap::getBucketContents() const {
+    QVector<QVector<QPair<QString, QString>>> contents;
+    contents.reserve(static_cast<int>(buckets_.size()));
+    
+    for (const auto &chain : buckets_) {
+        QVector<QPair<QString, QString>> bucketItems;
+        for (const auto &node : chain) {
+            bucketItems.push_back(QPair<QString, QString>(node.key, node.value));
+        }
+        contents.push_back(bucketItems);
+    }
+    
+    return contents;
+}
+
 

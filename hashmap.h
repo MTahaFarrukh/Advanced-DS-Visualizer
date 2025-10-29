@@ -42,6 +42,7 @@ public:
     const QVector<QString> &lastSteps() const;
     void clearSteps();
     QVector<int> bucketSizes() const;
+    QVector<QVector<QPair<QString, QString>>> getBucketContents() const;
 
 private:
     struct Node {

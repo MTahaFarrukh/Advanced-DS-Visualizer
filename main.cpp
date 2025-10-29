@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     QObject::connect(menuPage, &MenuPage::dataStructureSelected,
                      [mainWindow, menuPageIndex, &currentTheoryPage, &theoryPageIndex,
                       &currentOperationPage, &operationPageIndex, &currentDataStructure,
-                      &currentTreeInsertion, &visualizationPageIndex](const QString &dsName) {
+                      &currentTreeInsertion, &currentHashMapVisualization, &visualizationPageIndex](const QString &dsName) {
                          // Store current data structure
                          currentDataStructure = dsName;
 
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
                          QObject::connect(currentTheoryPage, &TheoryPage::tryItYourself,
                                           [mainWindow, &currentOperationPage, &operationPageIndex,
                                            &theoryPageIndex, &currentDataStructure, &currentTreeInsertion,
-                                           &visualizationPageIndex]() {
+                                           &currentHashMapVisualization, &visualizationPageIndex]() {
                                               // Remove old operation page if exists
                                               if (currentOperationPage) {
                                                   mainWindow->removeWidget(currentOperationPage);
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 
                                                                        mainWindow->setCurrentIndex(visualizationPageIndex);
                                                                    }
-                                                                   else if (currentDataStructure == "HashMap") {
+                                                                   else if (currentDataStructure == "Hash Table") {
                                                                        // For HashMap, any operation opens the same interactive visualization
                                                                        currentHashMapVisualization = new HashMapVisualization();
                                                                        visualizationPageIndex = mainWindow->addWidget(currentHashMapVisualization);
