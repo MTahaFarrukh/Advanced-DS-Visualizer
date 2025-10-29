@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Advanced Data Structure Visualizer — Project Analysis</title>
+  <style>
+    :root {
+      --bg: #f6f3ff;
+      --bg-2: #ede4ff;
+      --text: #2d1b69;
+      --muted: #6b5b95;
+      --brand: #7b4fff;
+      --brand-2: #9b6fff;
+      --border: rgba(123,79,255,0.15);
+    }
+    html, body { margin: 0; padding: 0; font-family: Segoe UI, Roboto, Arial, Helvetica, sans-serif; background: linear-gradient(135deg, var(--bg), var(--bg-2)); color: var(--text); }
+    .container { max-width: 980px; margin: 48px auto; padding: 0 24px 64px; }
+    .title { font-size: 34px; font-weight: 800; margin: 0 0 8px 0; letter-spacing: -0.5px; }
+    .subtitle { color: var(--muted); margin: 0 0 28px 0; font-size: 16px; }
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin: 14px 0; box-shadow: 0 10px 30px rgba(123,79,255,0.08); }
+    h2 { font-size: 22px; margin: 6px 0 12px; }
+    h3 { font-size: 18px; margin: 14px 0 10px; }
+    p { line-height: 1.6; }
+    ul { margin: 8px 0 0 20px; }
+    code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; background: #faf9ff; border: 1px solid var(--border); padding: 2px 6px; border-radius: 6px; }
+    .kv { display: grid; grid-template-columns: 180px 1fr; gap: 10px 16px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; font-weight: 600; font-size: 12px; letter-spacing: 0.3px; }
+    .foot { color: #8a7db0; font-size: 12px; margin-top: 28px; }
+  </style>
+  <meta name="description" content="Concise architectural and functional analysis of the Advanced Data Structure Visualizer (Qt Widgets, C++17, CMake)." />
+</head>
+<body>
+  <div class="container">
+    <div style="margin-bottom: 8px"><span class="pill">Project Analysis</span></div>
+    <h1 class="title">Advanced Data Structure Visualizer</h1>
+    <p class="subtitle">Qt Widgets • C++17 • CMake • Animated visualizations for learning data structures</p>
+
+    <div class="card">
+      <h2>Overview</h2>
+      <p>
+        A Qt Widgets application organized around a <span class="mono">QStackedWidget</span> flow:
+        landing → menu → theory → operations → visualization. The implemented visualization covers
+        Binary Tree insertion with animated traversal and drawing using <span class="mono">QPainter</span>.
+      </p>
+      <div class="kv">
+        <div><b>Target</b></div><div><span class="mono">AdvDS</span> (CMake)</div>
+        <div><b>Languages</b></div><div>C++17</div>
+        <div><b>Framework</b></div><div>Qt 6/5 Widgets</div>
+        <div><b>Build</b></div><div>CMake with AUTOUIC/AUTOMOC/AUTORCC</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Key Entry Points</h2>
+      <ul>
+        <li><b>main:</b> creates <span class="mono">QStackedWidget</span>, wires navigation between pages.</li>
+        <li><b>Pages:</b> <span class="mono">HomePage</span>, <span class="mono">MenuPage</span>, <span class="mono">TheoryPage</span>, <span class="mono">OperationPage</span>, <span class="mono">TreeInsertion</span>.</li>
+        <li><b>UI approach:</b> Pure code-driven widgets and custom painting; <span class="mono">mainwindow.ui</span> exists but not used.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Navigation Flow (signals/slots)</h2>
+      <ul>
+        <li><span class="mono">HomePage::navigateToMenu</span> → Menu</li>
+        <li><span class="mono">MenuPage::dataStructureSelected(ds)</span> → creates <span class="mono">TheoryPage(ds)</span></li>
+        <li><span class="mono">TheoryPage::tryItYourself</span> → creates <span class="mono">OperationPage(ds)</span></li>
+        <li><span class="mono">OperationPage::operationSelected("Insertion")</span> with ds == <i>Binary Tree</i> → creates <span class="mono">TreeInsertion</span></li>
+        <li>Each page exposes a back signal to return to the previous view.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Implemented Visualization</h2>
+      <h3>Binary Tree — Insertion</h3>
+      <ul>
+        <li>Interactive controls: input value, Insert, Clear Tree.</li>
+        <li>Animated traversal path highlighting with timed steps.</li>
+        <li>Dynamic layout: node positions computed per level; edges and nodes drawn with <span class="mono">QPainter</span>.</li>
+        <li>Status text updates (e.g., comparisons, insert locations).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Files of Interest</h2>
+      <ul>
+        <li><span class="mono">CMakeLists.txt</span>: Qt Widgets target, adds all page sources.</li>
+        <li><span class="mono">main.cpp</span>: Stacked navigation and signal wiring.</li>
+        <li><span class="mono">homepage.*</span>, <span class="mono">menupage.*</span>: Landing and menu UIs with subtle animations.</li>
+        <li><span class="mono">theorypage.*</span>: Theory content generator per data structure.</li>
+        <li><span class="mono">operationpage.*</span>: Operation selections and transitions.</li>
+        <li><span class="mono">treeinsertion.*</span>: Visualization implementation for insertion.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Notable Observations</h2>
+      <ul>
+        <li>Only Binary Tree → Insertion visualization is implemented; others are TODO.</li>
+        <li><span class="mono">MainWindow</span> and <span class="mono">mainwindow.ui</span> are present but unused by <span class="mono">main.cpp</span>.</li>
+        <li><span class="mono">homepagewidget.cpp</span> references a missing header and is not included in the build.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>How to Build/Run</h2>
+      <ul>
+        <li>Open in Qt Creator (Kit: Qt 6/5 Widgets) and build target <span class="mono">AdvDS</span>.</li>
+        <li>Or generate with CMake and build with your compiler toolchain.</li>
+      </ul>
+    </div>
+
+    <p class="foot">Generated report — Advanced DS Visualizer</p>
+  </div>
+</body>
+</html>
+
+
+

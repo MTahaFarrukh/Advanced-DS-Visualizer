@@ -7,6 +7,7 @@
 #include "theorypage.h"
 #include "operationpage.h"
 #include "treeinsertion.h"
+#include "hashmapvisualization.h"
 
 int main(int argc, char *argv[])
 {
@@ -32,6 +33,7 @@ int main(int argc, char *argv[])
     TheoryPage *currentTheoryPage = nullptr;
     OperationPage *currentOperationPage = nullptr;
     TreeInsertion *currentTreeInsertion = nullptr;
+    HashMapVisualization *currentHashMapVisualization = nullptr;
     int theoryPageIndex = -1;
     int operationPageIndex = -1;
     int visualizationPageIndex = -1;
@@ -89,13 +91,18 @@ int main(int argc, char *argv[])
 
                                               // Connect operation selection to visualization
                                               QObject::connect(currentOperationPage, &OperationPage::operationSelected,
-                                                               [mainWindow, &currentTreeInsertion, &visualizationPageIndex,
+                                                               [mainWindow, &currentTreeInsertion, &currentHashMapVisualization, &visualizationPageIndex,
                                                                 &operationPageIndex, &currentDataStructure](const QString &operation) {
-                                                                   // Remove old visualization page if exists
+                                                                   // Remove old visualization pages if they exist
                                                                    if (currentTreeInsertion) {
                                                                        mainWindow->removeWidget(currentTreeInsertion);
                                                                        currentTreeInsertion->deleteLater();
                                                                        currentTreeInsertion = nullptr;
+                                                                   }
+                                                                   if (currentHashMapVisualization) {
+                                                                       mainWindow->removeWidget(currentHashMapVisualization);
+                                                                       currentHashMapVisualization->deleteLater();
+                                                                       currentHashMapVisualization = nullptr;
                                                                    }
 
                                                                    // Create appropriate visualization based on data structure and operation
@@ -105,6 +112,19 @@ int main(int argc, char *argv[])
 
                                                                        // Connect back button to return to operations
                                                                        QObject::connect(currentTreeInsertion, &TreeInsertion::backToOperations,
+                                                                                        [mainWindow, operationPageIndex]() {
+                                                                                            mainWindow->setCurrentIndex(operationPageIndex);
+                                                                                        });
+
+                                                                       mainWindow->setCurrentIndex(visualizationPageIndex);
+                                                                   }
+                                                                   else if (currentDataStructure == "HashMap") {
+                                                                       // For HashMap, any operation opens the same interactive visualization
+                                                                       currentHashMapVisualization = new HashMapVisualization();
+                                                                       visualizationPageIndex = mainWindow->addWidget(currentHashMapVisualization);
+
+                                                                       // Connect back button to return to operations
+                                                                       QObject::connect(currentHashMapVisualization, &HashMapVisualization::backToOperations,
                                                                                         [mainWindow, operationPageIndex]() {
                                                                                             mainWindow->setCurrentIndex(operationPageIndex);
                                                                                         });
