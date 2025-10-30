@@ -41,7 +41,7 @@ HashMapVisualization::~HashMapVisualization()
 
 void HashMapVisualization::setupUI()
 {
-    // Main splitter for left (visualization) and right (steps) panels
+    // Main splitter for left (visualization) and right (controls + trace) panels
     mainSplitter = new QSplitter(Qt::Horizontal, this);
     mainSplitter->setStyleSheet(R"(
         QSplitter::handle {
@@ -54,12 +54,12 @@ void HashMapVisualization::setupUI()
     )");
     
     setupVisualizationArea();
-    setupStepTracePanel();
+    setupRightPanel();
     
-    // Set splitter proportions (70% visualization, 30% steps)
+    // Set splitter proportions (65% visualization, 35% controls+trace)
     mainSplitter->addWidget(leftPanel);
     mainSplitter->addWidget(rightPanel);
-    mainSplitter->setSizes({840, 360});
+    mainSplitter->setSizes({780, 420});
     
     // Main layout
     QHBoxLayout *mainLayout = new QHBoxLayout(this);
@@ -84,9 +84,9 @@ void HashMapVisualization::setupVisualizationArea()
     backButton->setCursor(Qt::PointingHandCursor);
     backButton->setStyleSheet(R"(
         QPushButton {
-            background-color: rgba(123, 79, 255, 0.1);
-            color: #7b4fff;
-            border: 2px solid rgba(123, 79, 255, 0.3);
+            background-color: rgba(74, 144, 226, 0.1);
+            color: #4a90e2;
+            border: 2px solid rgba(74, 144, 226, 0.3);
             border-radius: 22px;
             padding: 10px 20px;
             font-family: 'Segoe UI';
@@ -94,16 +94,16 @@ void HashMapVisualization::setupVisualizationArea()
             font-weight: bold;
         }
         QPushButton:hover {
-            background-color: rgba(123, 79, 255, 0.2);
-            border-color: #7b4fff;
+            background-color: rgba(74, 144, 226, 0.2);
+            border-color: #4a90e2;
         }
         QPushButton:pressed {
-            background-color: rgba(123, 79, 255, 0.3);
+            background-color: rgba(74, 144, 226, 0.3);
         }
     )");
     connect(backButton, &QPushButton::clicked, this, &HashMapVisualization::onBackClicked);
     
-    titleLabel = new QLabel("Hash Table Visualization");
+    titleLabel = new QLabel("Generic Hash Table");
     QFont titleFont;
     QStringList preferredFonts = {"Segoe UI", "Poppins", "SF Pro Display", "Arial"};
     for (const QString &fontName : preferredFonts) {
@@ -112,10 +112,10 @@ void HashMapVisualization::setupVisualizationArea()
             break;
         }
     }
-    titleFont.setPointSize(32);
+    titleFont.setPointSize(28);
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
-    titleLabel->setStyleSheet("color: #2d1b69; background: transparent;");
+    titleLabel->setStyleSheet("color: #2c3e50; background: transparent;");
     titleLabel->setAlignment(Qt::AlignCenter);
     
     headerLayout->addWidget(backButton, 0, Qt::AlignLeft);
@@ -125,257 +125,71 @@ void HashMapVisualization::setupVisualizationArea()
     
     leftLayout->addLayout(headerLayout);
     
-    // Visualization area with gradient background
+    // Stats at top-left of visualization area
+    setupStatsTopLeft();
+    
+    // Visualization area with gradient background (fixed size, no scroll)
     scene = new QGraphicsScene(this);
     
     visualizationView = new QGraphicsView(scene);
     visualizationView->setRenderHint(QPainter::Antialiasing);
-    visualizationView->setDragMode(QGraphicsView::ScrollHandDrag);
-    visualizationView->setMinimumHeight(400);
+    visualizationView->setFixedHeight(450);
+    visualizationView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    visualizationView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     visualizationView->setStyleSheet(R"(
         QGraphicsView {
-            border: none;
+            border: 2px solid rgba(74, 144, 226, 0.2);
             border-radius: 20px;
             background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 rgba(250, 248, 255, 0.95),
-                stop:1 rgba(245, 240, 255, 0.95));
+                stop:0 rgba(248, 251, 255, 0.98),
+                stop:1 rgba(240, 247, 255, 0.98));
         }
     )");
     
     // Add drop shadow to visualization area
     QGraphicsDropShadowEffect *viewShadow = new QGraphicsDropShadowEffect();
-    viewShadow->setBlurRadius(25);
+    viewShadow->setBlurRadius(20);
     viewShadow->setXOffset(0);
-    viewShadow->setYOffset(8);
-    viewShadow->setColor(QColor(123, 79, 255, 30));
+    viewShadow->setYOffset(6);
+    viewShadow->setColor(QColor(74, 144, 226, 25));
     visualizationView->setGraphicsEffect(viewShadow);
     
     leftLayout->addWidget(visualizationView, 1);
     
-    setupControlPanel();
+    // Bottom note about bucket limitation
+    QLabel *bucketNote = new QLabel("* Limited to 10 buckets for screen visibility");
+    bucketNote->setStyleSheet(R"(
+        QLabel {
+            color: #7f8c8d;
+            font-size: 11px;
+            font-style: italic;
+            padding: 5px;
+        }
+    )");
+    bucketNote->setAlignment(Qt::AlignLeft);
+    leftLayout->addWidget(bucketNote);
 }
 
-void HashMapVisualization::setupControlPanel()
+void HashMapVisualization::setupStatsTopLeft()
 {
-    controlPanel = new QWidget();
-    controlPanel->setFixedHeight(170);
-    controlPanel->setStyleSheet(R"(
-        QWidget {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 rgba(255, 255, 255, 0.95),
-                stop:1 rgba(250, 248, 255, 0.95));
-            border-radius: 20px;
-            border: 2px solid rgba(123, 79, 255, 0.1);
-        }
-    )");
-    
-    // Add drop shadow to control panel
-    QGraphicsDropShadowEffect *controlShadow = new QGraphicsDropShadowEffect();
-    controlShadow->setBlurRadius(20);
-    controlShadow->setXOffset(0);
-    controlShadow->setYOffset(6);
-    controlShadow->setColor(QColor(123, 79, 255, 25));
-    controlPanel->setGraphicsEffect(controlShadow);
-    
-    QVBoxLayout *controlLayout = new QVBoxLayout(controlPanel);
-    controlLayout->setContentsMargins(30, 20, 30, 20);
-    controlLayout->setSpacing(12);
-    
-    // Input row with modern styling
-    QHBoxLayout *inputLayout = new QHBoxLayout();
-    inputLayout->setSpacing(15);
-    
-    keyInput = new QLineEdit();
-    keyInput->setPlaceholderText("Enter key (e.g., apple)");
-    keyInput->setFixedHeight(45);
-    keyInput->setStyleSheet(R"(
-        QLineEdit {
-            border: 2px solid rgba(123, 79, 255, 0.2);
-            border-radius: 22px;
-            padding: 12px 20px;
-            font-size: 14px;
-            font-family: 'Segoe UI';
-            background-color: rgba(255, 255, 255, 0.8);
-            color: #2d1b69;
-        }
-        QLineEdit:focus {
-            border-color: #7b4fff;
-            background-color: white;
-            outline: none;
-        }
-        QLineEdit::placeholder {
-            color: rgba(45, 27, 105, 0.5);
-        }
-    )");
-    
-    valueInput = new QLineEdit();
-    valueInput->setPlaceholderText("Enter value (e.g., red)");
-    valueInput->setFixedHeight(45);
-    valueInput->setStyleSheet(keyInput->styleSheet());
-    
-    inputLayout->addWidget(keyInput);
-    inputLayout->addWidget(valueInput);
-    
-    // Button row with beautiful styling
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->setSpacing(10);
-    
-    insertButton = new QPushButton("Insert");
-    insertButton->setMinimumWidth(100);
-    insertButton->setMaximumWidth(150);
-    
-    searchButton = new QPushButton("Search");
-    searchButton->setMinimumWidth(100);
-    searchButton->setMaximumWidth(150);
-    
-    deleteButton = new QPushButton("Delete");
-    deleteButton->setMinimumWidth(100);
-    deleteButton->setMaximumWidth(150);
-    
-    clearButton = new QPushButton("Clear");
-    clearButton->setMinimumWidth(100);
-    clearButton->setMaximumWidth(150);
-    
-    randomizeButton = new QPushButton("Random");
-    randomizeButton->setMinimumWidth(100);
-    randomizeButton->setMaximumWidth(150);
-    
-    // Style buttons with modern gradients
-    QString insertStyle = R"(
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #28a745, stop:1 #20c997);
-            color: white;
-            border: none;
-            border-radius: 18px;
-            padding: 10px 16px;
-            font-family: 'Segoe UI';
-            font-size: 12px;
-            font-weight: bold;
-            min-height: 36px;
-        }
-        QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #218838, stop:1 #1ea085);
-        }
-        QPushButton:pressed {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #1e7e34, stop:1 #198754);
-        }
-    )";
-    
-    QString searchStyle = R"(
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #17a2b8, stop:1 #6f42c1);
-            color: white;
-            border: none;
-            border-radius: 18px;
-            padding: 10px 16px;
-            font-family: 'Segoe UI';
-            font-size: 12px;
-            font-weight: bold;
-            min-height: 36px;
-        }
-        QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #138496, stop:1 #5a2d91);
-        }
-    )";
-    
-    QString deleteStyle = R"(
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #dc3545, stop:1 #e83e8c);
-            color: white;
-            border: none;
-            border-radius: 18px;
-            padding: 10px 16px;
-            font-family: 'Segoe UI';
-            font-size: 12px;
-            font-weight: bold;
-            min-height: 36px;
-        }
-        QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #c82333, stop:1 #d91a72);
-        }
-    )";
-    
-    QString clearStyle = R"(
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #6c757d, stop:1 #495057);
-            color: white;
-            border: none;
-            border-radius: 18px;
-            padding: 10px 16px;
-            font-family: 'Segoe UI';
-            font-size: 12px;
-            font-weight: bold;
-            min-height: 36px;
-        }
-        QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #5a6268, stop:1 #3d4142);
-        }
-    )";
-    
-    QString randomizeStyle = R"(
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #fd7e14, stop:1 #ffc107);
-            color: white;
-            border: none;
-            border-radius: 18px;
-            padding: 10px 16px;
-            font-family: 'Segoe UI';
-            font-size: 12px;
-            font-weight: bold;
-            min-height: 36px;
-        }
-        QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #e8650e, stop:1 #e0a800);
-        }
-    )";
-    
-    insertButton->setStyleSheet(insertStyle);
-    searchButton->setStyleSheet(searchStyle);
-    deleteButton->setStyleSheet(deleteStyle);
-    clearButton->setStyleSheet(clearStyle);
-    randomizeButton->setStyleSheet(randomizeStyle);
-    
-    insertButton->setCursor(Qt::PointingHandCursor);
-    searchButton->setCursor(Qt::PointingHandCursor);
-    deleteButton->setCursor(Qt::PointingHandCursor);
-    clearButton->setCursor(Qt::PointingHandCursor);
-    randomizeButton->setCursor(Qt::PointingHandCursor);
-    
-    buttonLayout->addWidget(insertButton);
-    buttonLayout->addWidget(searchButton);
-    buttonLayout->addWidget(deleteButton);
-    buttonLayout->addWidget(clearButton);
-    buttonLayout->addWidget(randomizeButton);
-    
-    // Stats row with modern styling
+    // Stats at top-left of visualization area
     QHBoxLayout *statsLayout = new QHBoxLayout();
-    statsLayout->setSpacing(20);
+    statsLayout->setSpacing(15);
     
     sizeLabel = new QLabel("Size: 0");
-    bucketCountLabel = new QLabel("Buckets: 8");
+    bucketCountLabel = new QLabel("Buckets: 10");
     loadFactorLabel = new QLabel("Load Factor: 0.00");
     
     QString statsStyle = R"(
         QLabel {
-            color: #2d1b69;
+            color: #34495e;
             font-weight: bold;
             font-family: 'Segoe UI';
-            font-size: 13px;
+            font-size: 12px;
             padding: 8px 12px;
-            background-color: rgba(123, 79, 255, 0.1);
+            background-color: rgba(74, 144, 226, 0.1);
             border-radius: 12px;
-            border: 1px solid rgba(123, 79, 255, 0.2);
+            border: 1px solid rgba(74, 144, 226, 0.2);
         }
     )";
     
@@ -388,11 +202,336 @@ void HashMapVisualization::setupControlPanel()
     statsLayout->addWidget(loadFactorLabel);
     statsLayout->addStretch();
     
-    controlLayout->addLayout(inputLayout);
-    controlLayout->addLayout(buttonLayout);
-    controlLayout->addLayout(statsLayout);
+    leftLayout->addLayout(statsLayout);
+}
+
+void HashMapVisualization::setupRightPanel()
+{
+    rightPanel = new QWidget();
+    rightPanel->setMinimumWidth(400);
+    rightPanel->setStyleSheet(R"(
+        QWidget {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 rgba(248, 251, 255, 0.98),
+                stop:1 rgba(240, 247, 255, 0.98));
+        }
+    )");
     
-    leftLayout->addWidget(controlPanel);
+    rightLayout = new QVBoxLayout(rightPanel);
+    rightLayout->setContentsMargins(20, 20, 20, 20);
+    rightLayout->setSpacing(15);
+    
+    // Split right panel: chat history top, controls bottom
+    setupStepTraceTop();
+    setupTypeSelection();
+    setupControls();
+}
+
+void HashMapVisualization::setupStepTraceTop()
+{
+    // Chat history at top of right panel
+    traceGroup = new QGroupBox("Operation History");
+    traceGroup->setStyleSheet(R"(
+        QGroupBox {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2c3e50;
+            border: 2px solid rgba(74, 144, 226, 0.2);
+            border-radius: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            background: rgba(255, 255, 255, 0.7);
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 15px;
+            padding: 0 8px 0 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 6px;
+        }
+    )");
+    
+    QVBoxLayout *traceLayout = new QVBoxLayout(traceGroup);
+    traceLayout->setContentsMargins(15, 20, 15, 15);
+    
+    stepsList = new QListWidget();
+    stepsList->setMinimumHeight(250);
+    stepsList->setStyleSheet(R"(
+        QListWidget {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(74, 144, 226, 0.15);
+            border-radius: 8px;
+            padding: 8px;
+            font-family: 'Segoe UI';
+            font-size: 12px;
+            selection-background-color: rgba(74, 144, 226, 0.2);
+        }
+        QListWidget::item {
+            padding: 8px 12px;
+            margin: 2px 0px;
+            border-radius: 6px;
+            background-color: rgba(248, 251, 255, 0.8);
+            border: 1px solid rgba(74, 144, 226, 0.1);
+            color: #2c3e50;
+        }
+        QListWidget::item:hover {
+            background-color: rgba(74, 144, 226, 0.1);
+            border-color: rgba(74, 144, 226, 0.2);
+        }
+        QListWidget::item:selected {
+            background: rgba(74, 144, 226, 0.15);
+            color: #2c3e50;
+            border-color: #4a90e2;
+        }
+        QScrollBar:vertical {
+            background-color: rgba(74, 144, 226, 0.05);
+            width: 12px;
+            border-radius: 6px;
+            margin: 2px;
+        }
+        QScrollBar::handle:vertical {
+            background-color: rgba(74, 144, 226, 0.3);
+            border-radius: 5px;
+            min-height: 20px;
+            margin: 1px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background-color: rgba(74, 144, 226, 0.5);
+        }
+        QScrollBar::handle:vertical:pressed {
+            background-color: #4a90e2;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+        }
+    )");
+    
+    traceLayout->addWidget(stepsList);
+    rightLayout->addWidget(traceGroup, 2);  // Give it more space (2/3 of right panel)
+}
+
+void HashMapVisualization::setupTypeSelection()
+{
+    typeGroup = new QGroupBox("Data Types");
+    typeGroup->setStyleSheet(R"(
+        QGroupBox {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2c3e50;
+            border: 2px solid rgba(74, 144, 226, 0.2);
+            border-radius: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 15px;
+            padding: 0 8px 0 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 6px;
+            color: #2c3e50;
+        }
+    )");
+    
+    QHBoxLayout *typeLayout = new QHBoxLayout(typeGroup);
+    
+    QLabel *keyLabel = new QLabel("Key:");
+    keyLabel->setStyleSheet("color: #2c3e50; font-weight: bold; font-size: 12px;");
+    keyTypeCombo = new QComboBox();
+    keyTypeCombo->addItems({"String", "Integer", "Double", "Float"});
+    
+    QLabel *valueLabel = new QLabel("Value:");
+    valueLabel->setStyleSheet("color: #2c3e50; font-weight: bold; font-size: 12px;");
+    valueTypeCombo = new QComboBox();
+    valueTypeCombo->addItems({"String", "Integer", "Double", "Float"});
+    
+    QString comboStyle = R"(
+        QComboBox {
+            border: 2px solid rgba(74, 144, 226, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background: white;
+            color: #2c3e50;
+            min-width: 90px;
+            selection-background-color: rgba(74, 144, 226, 0.2);
+        }
+        QComboBox:hover {
+            border-color: rgba(74, 144, 226, 0.6);
+            background: rgba(248, 251, 255, 1.0);
+        }
+        QComboBox:focus {
+            border-color: #4a90e2;
+            background: white;
+        }
+        QComboBox:on {
+            border-color: #4a90e2;
+            background: rgba(248, 251, 255, 1.0);
+        }
+        QComboBox::drop-down {
+            subcontrol-origin: padding;
+            subcontrol-position: top right;
+            width: 25px;
+            border-left: 1px solid rgba(74, 144, 226, 0.3);
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            background: rgba(74, 144, 226, 0.05);
+        }
+        QComboBox::drop-down:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+        QComboBox::down-arrow {
+            image: none;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 6px solid #4a90e2;
+            margin: 0px;
+        }
+        QComboBox::down-arrow:hover {
+            border-top-color: #2980b9;
+        }
+        QComboBox QAbstractItemView {
+            border: 2px solid rgba(74, 144, 226, 0.3);
+            border-radius: 8px;
+            background: white;
+            color: #2c3e50;
+            selection-background-color: rgba(74, 144, 226, 0.15);
+            selection-color: #2c3e50;
+            outline: none;
+        }
+        QComboBox QAbstractItemView::item {
+            padding: 8px 12px;
+            border: none;
+            min-height: 20px;
+        }
+        QComboBox QAbstractItemView::item:hover {
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+        QComboBox QAbstractItemView::item:selected {
+            background-color: rgba(74, 144, 226, 0.2);
+            color: #2c3e50;
+        }
+    )";
+    
+    keyTypeCombo->setStyleSheet(comboStyle);
+    valueTypeCombo->setStyleSheet(comboStyle);
+    
+    // Horizontal layout: Key [dropdown] Value [dropdown]
+    typeLayout->addWidget(keyLabel);
+    typeLayout->addWidget(keyTypeCombo);
+    typeLayout->addWidget(valueLabel);
+    typeLayout->addWidget(valueTypeCombo);
+    typeLayout->addStretch();
+    
+    connect(keyTypeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &HashMapVisualization::onTypeChanged);
+    connect(valueTypeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &HashMapVisualization::onTypeChanged);
+    
+    rightLayout->addWidget(typeGroup);
+}
+
+void HashMapVisualization::setupControls()
+{
+    controlGroup = new QGroupBox("Operations");
+    controlGroup->setStyleSheet(R"(
+        QGroupBox {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2c3e50;
+            border: 2px solid rgba(74, 144, 226, 0.2);
+            border-radius: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 15px;
+            padding: 0 8px 0 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 6px;
+            color: #2c3e50;
+        }
+    )");
+    
+    QVBoxLayout *controlLayout = new QVBoxLayout(controlGroup);
+    
+    // Input fields
+    QHBoxLayout *inputLayout = new QHBoxLayout();
+    
+    keyInput = new QLineEdit();
+    keyInput->setPlaceholderText("Enter key (leave empty to search by value)");
+    valueInput = new QLineEdit();
+    valueInput->setPlaceholderText("Enter value (leave empty to search by key)");
+    
+    QString inputStyle = R"(
+        QLineEdit {
+            border: 2px solid rgba(74, 144, 226, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            background: white;
+            color: #2c3e50;
+        }
+        QLineEdit:focus {
+            border-color: #4a90e2;
+        }
+        QLineEdit::placeholder {
+            color: #7f8c8d;
+        }
+    )";
+    
+    keyInput->setStyleSheet(inputStyle);
+    valueInput->setStyleSheet(inputStyle);
+    
+    inputLayout->addWidget(keyInput);
+    inputLayout->addWidget(valueInput);
+    
+    controlLayout->addLayout(inputLayout);
+    
+    // Buttons
+    QHBoxLayout *buttonLayout1 = new QHBoxLayout();
+    QHBoxLayout *buttonLayout2 = new QHBoxLayout();
+    
+    insertButton = new QPushButton("Insert");
+    searchButton = new QPushButton("Search");
+    deleteButton = new QPushButton("Delete");
+    clearButton = new QPushButton("Clear");
+    randomizeButton = new QPushButton("Random");
+    
+    QString buttonStyle = R"(
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 #7b4fff, stop:1 #9b6fff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 #6c3cff, stop:1 #8b5fff);
+        }
+    )";
+    
+    insertButton->setStyleSheet(buttonStyle);
+    searchButton->setStyleSheet(buttonStyle);
+    deleteButton->setStyleSheet(buttonStyle);
+    clearButton->setStyleSheet(buttonStyle);
+    randomizeButton->setStyleSheet(buttonStyle);
+    
+    buttonLayout1->addWidget(insertButton);
+    buttonLayout1->addWidget(searchButton);
+    buttonLayout1->addWidget(deleteButton);
+    
+    buttonLayout2->addWidget(clearButton);
+    buttonLayout2->addWidget(randomizeButton);
+    
+    controlLayout->addLayout(buttonLayout1);
+    controlLayout->addLayout(buttonLayout2);
     
     // Connect signals
     connect(insertButton, &QPushButton::clicked, this, &HashMapVisualization::onInsertClicked);
@@ -400,113 +539,99 @@ void HashMapVisualization::setupControlPanel()
     connect(deleteButton, &QPushButton::clicked, this, &HashMapVisualization::onDeleteClicked);
     connect(clearButton, &QPushButton::clicked, this, &HashMapVisualization::onClearClicked);
     connect(randomizeButton, &QPushButton::clicked, this, &HashMapVisualization::onRandomizeClicked);
+    
+    rightLayout->addWidget(controlGroup);
 }
 
-void HashMapVisualization::setupStepTracePanel()
+void HashMapVisualization::setupStats()
 {
-    rightPanel = new QWidget();
-    rightPanel->setMinimumWidth(350);
-    rightPanel->setStyleSheet(R"(
-        QWidget {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 rgba(250, 248, 255, 0.98),
-                stop:1 rgba(245, 240, 255, 0.98));
-            border-left: none;
-        }
-    )");
-    
-    rightLayout = new QVBoxLayout(rightPanel);
-    rightLayout->setContentsMargins(20, 30, 20, 30);
-    rightLayout->setSpacing(20);
-    
-    // Steps title with modern styling
-    stepsTitle = new QLabel("Step-by-Step Trace");
-    QFont stepsFont;
-    stepsFont.setFamily("Segoe UI");
-    stepsFont.setPointSize(18);
-    stepsFont.setBold(true);
-    stepsTitle->setFont(stepsFont);
-    stepsTitle->setStyleSheet(R"(
-        QLabel {
+    statsGroup = new QGroupBox("Statistics");
+    statsGroup->setStyleSheet(R"(
+        QGroupBox {
+            font-weight: bold;
+            font-size: 14px;
             color: #2d1b69;
-            padding: 15px;
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 rgba(123, 79, 255, 0.1),
-                stop:1 rgba(123, 79, 255, 0.05));
-            border-radius: 15px;
             border: 2px solid rgba(123, 79, 255, 0.2);
+            border-radius: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 5px 0 5px;
         }
     )");
-    stepsTitle->setAlignment(Qt::AlignCenter);
     
-    // Add drop shadow to title
-    QGraphicsDropShadowEffect *titleShadow = new QGraphicsDropShadowEffect();
-    titleShadow->setBlurRadius(15);
-    titleShadow->setXOffset(0);
-    titleShadow->setYOffset(4);
-    titleShadow->setColor(QColor(123, 79, 255, 20));
-    stepsTitle->setGraphicsEffect(titleShadow);
+    QHBoxLayout *statsLayout = new QHBoxLayout(statsGroup);
     
-    // Steps list with beautiful styling
+    sizeLabel = new QLabel("Size: 0");
+    bucketCountLabel = new QLabel("Buckets: 10");
+    loadFactorLabel = new QLabel("Load: 0.00");
+    
+    QString statsStyle = R"(
+        QLabel {
+            background: rgba(123, 79, 255, 0.1);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-weight: bold;
+        }
+    )";
+    
+    sizeLabel->setStyleSheet(statsStyle);
+    bucketCountLabel->setStyleSheet(statsStyle);
+    loadFactorLabel->setStyleSheet(statsStyle);
+    
+    statsLayout->addWidget(sizeLabel);
+    statsLayout->addWidget(bucketCountLabel);
+    statsLayout->addWidget(loadFactorLabel);
+    
+    rightLayout->addWidget(statsGroup);
+}
+
+void HashMapVisualization::setupStepTrace()
+{
+    traceGroup = new QGroupBox("Operation History");
+    traceGroup->setStyleSheet(R"(
+        QGroupBox {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2d1b69;
+            border: 2px solid rgba(123, 79, 255, 0.2);
+            border-radius: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 5px 0 5px;
+        }
+    )");
+    
+    QVBoxLayout *traceLayout = new QVBoxLayout(traceGroup);
+    
     stepsList = new QListWidget();
     stepsList->setStyleSheet(R"(
         QListWidget {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 rgba(255, 255, 255, 0.95),
-                stop:1 rgba(250, 248, 255, 0.95));
-            border: 2px solid rgba(123, 79, 255, 0.1);
-            border-radius: 15px;
-            padding: 10px;
+            background: white;
+            border: 1px solid rgba(123, 79, 255, 0.2);
+            border-radius: 8px;
+            padding: 5px;
             font-family: 'Segoe UI';
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 12px;
         }
         QListWidget::item {
-            padding: 12px 15px;
-            margin: 3px 0px;
-            border-radius: 10px;
-            background-color: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(123, 79, 255, 0.1);
-            color: #2d1b69;
-            line-height: 1.4;
-        }
-        QListWidget::item:hover {
-            background-color: rgba(123, 79, 255, 0.05);
-            border-color: rgba(123, 79, 255, 0.2);
+            padding: 6px;
+            border-bottom: 1px solid #f0f0f0;
         }
         QListWidget::item:selected {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 rgba(123, 79, 255, 0.15),
-                stop:1 rgba(123, 79, 255, 0.1));
-            color: #2d1b69;
-            border-color: #7b4fff;
-            font-weight: bold;
-        }
-        QScrollBar:vertical {
-            background-color: rgba(123, 79, 255, 0.1);
-            width: 8px;
-            border-radius: 4px;
-        }
-        QScrollBar::handle:vertical {
-            background-color: rgba(123, 79, 255, 0.3);
-            border-radius: 4px;
-            min-height: 20px;
-        }
-        QScrollBar::handle:vertical:hover {
-            background-color: rgba(123, 79, 255, 0.5);
+            background: rgba(123, 79, 255, 0.1);
         }
     )");
     
-    // Add drop shadow to steps list
-    QGraphicsDropShadowEffect *listShadow = new QGraphicsDropShadowEffect();
-    listShadow->setBlurRadius(20);
-    listShadow->setXOffset(0);
-    listShadow->setYOffset(6);
-    listShadow->setColor(QColor(123, 79, 255, 15));
-    stepsList->setGraphicsEffect(listShadow);
-    
-    rightLayout->addWidget(stepsTitle);
-    rightLayout->addWidget(stepsList, 1);
+    traceLayout->addWidget(stepsList);
+    rightLayout->addWidget(traceGroup, 1);  // Give it more space
 }
 
 
@@ -520,7 +645,7 @@ void HashMapVisualization::drawBuckets()
     
     const int bucketCount = 10; // Fixed 10 buckets
     const QVector<int> bucketSizes = hashMap->bucketSizes();
-    const QVector<QVector<QPair<QString, QString>>> bucketContents = hashMap->getBucketContents();
+    const QVector<QVector<QPair<QVariant, QVariant>>> bucketContents = hashMap->getBucketContents();
     
     // Calculate layout for 10 buckets in a single row
     const int totalWidth = bucketCount * (BUCKET_WIDTH + BUCKET_SPACING) - BUCKET_SPACING;
@@ -587,9 +712,11 @@ void HashMapVisualization::drawBuckets()
                 scene->addItem(itemBgPath);
                 
                 // Chain item text with actual key-value pair
-                const QString &key = items[j].first;
-                const QString &value = items[j].second;
-                QString displayText = QString("%1→%2").arg(key.left(4), value.left(4));
+                const QVariant &key = items[j].first;
+                const QVariant &value = items[j].second;
+                QString keyStr = HashMap::variantToDisplayString(key);
+                QString valueStr = HashMap::variantToDisplayString(value);
+                QString displayText = QString("%1→%2").arg(keyStr.left(4), valueStr.left(4));
                 
                 QGraphicsTextItem *chainItem = scene->addText(displayText);
                 chainItem->setPos(x + 6, itemY + 2);
@@ -626,21 +753,14 @@ void HashMapVisualization::drawBuckets()
         }
     }
     
-    // Add title and limitation note
+    // Add title higher up
     QGraphicsTextItem *vizTitle = scene->addText("Hash Table (Open Chaining)");
-    QFont titleFont("Segoe UI", 18);
+    QFont titleFont("Segoe UI", 16);
     titleFont.setBold(true);
     vizTitle->setFont(titleFont);
-    vizTitle->setDefaultTextColor(QColor(45, 27, 105));
-    vizTitle->setPos(-totalWidth/2, -85);
+    vizTitle->setDefaultTextColor(QColor(44, 62, 80));
+    vizTitle->setPos(-totalWidth/2, -120);
     
-    // Add limitation note
-    QGraphicsTextItem *limitNote = scene->addText("* Limited to 10 buckets for screen visibility");
-    QFont noteFont("Segoe UI", 10);
-    noteFont.setItalic(true);
-    limitNote->setFont(noteFont);
-    limitNote->setDefaultTextColor(QColor(108, 117, 125));
-    limitNote->setPos(-totalWidth/2, -60);
     
     // Adjust scene rect with padding
     scene->setSceneRect(scene->itemsBoundingRect().adjusted(-60, -100, 60, 80));
@@ -657,11 +777,41 @@ void HashMapVisualization::updateStepTrace()
     stepsList->clear();
     const QVector<QString> &steps = hashMap->lastSteps();
     
-    for (const QString &step : steps) {
-        stepsList->addItem(step);
+    for (int i = 0; i < steps.size(); ++i) {
+        const QString &step = steps[i];
+        
+        // Add step with better formatting
+        QListWidgetItem *item = new QListWidgetItem(step);
+        
+        // Add spacing between different operations
+        if (step.startsWith("🔍") || step.startsWith("➕") || step.startsWith("❌") || step.startsWith("🗑️")) {
+            // This is a new operation - add some visual separation
+            if (i > 0) {
+                QListWidgetItem *separator = new QListWidgetItem("────────────────────");
+                separator->setTextAlignment(Qt::AlignCenter);
+                separator->setFlags(Qt::NoItemFlags); // Make it non-selectable
+                separator->setForeground(QColor(189, 195, 199));
+                stepsList->addItem(separator);
+            }
+        }
+        
+        // Style different types of steps
+        if (step.contains("✅")) {
+            item->setForeground(QColor(39, 174, 96)); // Green for success
+        } else if (step.contains("❌")) {
+            item->setForeground(QColor(231, 76, 60)); // Red for failure
+        } else if (step.contains("🔍")) {
+            item->setForeground(QColor(52, 152, 219)); // Blue for search
+        } else if (step.contains("📊") || step.contains("🎯")) {
+            item->setForeground(QColor(155, 89, 182)); // Purple for calculation
+        } else {
+            item->setForeground(QColor(44, 62, 80)); // Default dark color
+        }
+        
+        stepsList->addItem(item);
     }
     
-    // Auto-scroll to bottom
+    // Auto-scroll to bottom to show latest steps
     if (stepsList->count() > 0) {
         stepsList->scrollToBottom();
     }
@@ -687,13 +837,73 @@ void HashMapVisualization::onBackClicked()
     emit backToOperations();
 }
 
+void HashMapVisualization::onTypeChanged()
+{
+    // Update HashMap data types based on combo box selections
+    HashMap::DataType keyType = static_cast<HashMap::DataType>(keyTypeCombo->currentIndex());
+    HashMap::DataType valueType = static_cast<HashMap::DataType>(valueTypeCombo->currentIndex());
+    
+    hashMap->setKeyType(keyType);
+    hashMap->setValueType(valueType);
+    
+    // Update input placeholders based on selected types
+    QString keyPlaceholder = QString("Enter %1 key").arg(HashMap::dataTypeToString(keyType).toLower());
+    QString valuePlaceholder = QString("Enter %1 value").arg(HashMap::dataTypeToString(valueType).toLower());
+    
+    keyInput->setPlaceholderText(keyPlaceholder);
+    valueInput->setPlaceholderText(valuePlaceholder);
+    
+    // Clear existing data when types change
+    hashMap->clear();
+    updateVisualization();
+    updateStepTrace();
+}
+
+QVariant HashMapVisualization::convertStringToVariant(const QString &str, HashMap::DataType type)
+{
+    bool ok;
+    switch (type) {
+        case HashMap::STRING:
+            return QVariant(str);
+        case HashMap::INTEGER: {
+            int intVal = str.toInt(&ok);
+            return ok ? QVariant(intVal) : QVariant();
+        }
+        case HashMap::DOUBLE: {
+            double doubleVal = str.toDouble(&ok);
+            return ok ? QVariant(doubleVal) : QVariant();
+        }
+        case HashMap::FLOAT: {
+            float floatVal = str.toFloat(&ok);
+            return ok ? QVariant(floatVal) : QVariant();
+        }
+        default:
+            return QVariant();
+    }
+}
+
 void HashMapVisualization::onInsertClicked()
 {
-    const QString key = keyInput->text().trimmed();
-    const QString value = valueInput->text().trimmed();
+    const QString keyStr = keyInput->text().trimmed();
+    const QString valueStr = valueInput->text().trimmed();
     
-    if (key.isEmpty() || value.isEmpty()) {
+    if (keyStr.isEmpty() || valueStr.isEmpty()) {
         // Visual feedback instead of popup
+        keyInput->setStyleSheet(keyInput->styleSheet() + "border-color: #dc3545 !important;");
+        valueInput->setStyleSheet(valueInput->styleSheet() + "border-color: #dc3545 !important;");
+        QTimer::singleShot(2000, [this]() {
+            keyInput->setStyleSheet(keyInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
+            valueInput->setStyleSheet(valueInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
+        });
+        return;
+    }
+    
+    // Convert strings to appropriate QVariant types
+    QVariant key = convertStringToVariant(keyStr, hashMap->getKeyType());
+    QVariant value = convertStringToVariant(valueStr, hashMap->getValueType());
+    
+    if (!key.isValid() || !value.isValid()) {
+        // Type conversion failed - show error
         keyInput->setStyleSheet(keyInput->styleSheet() + "border-color: #dc3545 !important;");
         valueInput->setStyleSheet(valueInput->styleSheet() + "border-color: #dc3545 !important;");
         QTimer::singleShot(2000, [this]() {
@@ -713,9 +923,140 @@ void HashMapVisualization::onInsertClicked()
 
 void HashMapVisualization::onSearchClicked()
 {
-    const QString key = keyInput->text().trimmed();
+    const QString keyStr = keyInput->text().trimmed();
+    const QString valueStr = valueInput->text().trimmed();
     
-    if (key.isEmpty()) {
+    // Determine search mode based on which field is filled
+    if (keyStr.isEmpty() && valueStr.isEmpty()) {
+        // Both empty - show error
+        keyInput->setStyleSheet(keyInput->styleSheet() + "border-color: #dc3545 !important;");
+        valueInput->setStyleSheet(valueInput->styleSheet() + "border-color: #dc3545 !important;");
+        QTimer::singleShot(2000, [this]() {
+            keyInput->setStyleSheet(keyInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
+            valueInput->setStyleSheet(valueInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
+        });
+        return;
+    }
+    
+    if (!keyStr.isEmpty()) {
+        // Search by key (key field is filled)
+        QVariant key = convertStringToVariant(keyStr, hashMap->getKeyType());
+        
+        if (!key.isValid()) {
+            keyInput->setStyleSheet(keyInput->styleSheet() + "border-color: #dc3545 !important;");
+            QTimer::singleShot(2000, [this]() {
+                keyInput->setStyleSheet(keyInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
+            });
+            return;
+        }
+        
+        // Perform search by key
+        auto result = hashMap->get(key);
+        animateOperation("Search");
+        
+        // If found, show the value in the history
+        if (result.has_value()) {
+            QString foundValue = HashMap::variantToDisplayString(result.value());
+            hashMap->addStepToHistory(QString("✅ Found! Key '%1' → Value '%2'").arg(keyStr, foundValue));
+            updateStepTrace();
+        }
+        
+        // Animate the search by highlighting the target bucket
+        animateSearchResult(keyStr, result.has_value());
+        
+    } else {
+        // Search by value (only value field is filled, key is empty)
+        QVariant value = convertStringToVariant(valueStr, hashMap->getValueType());
+        
+        if (!value.isValid()) {
+            valueInput->setStyleSheet(valueInput->styleSheet() + "border-color: #dc3545 !important;");
+            QTimer::singleShot(2000, [this]() {
+                valueInput->setStyleSheet(valueInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
+            });
+            return;
+        }
+        
+        // Perform search by value
+        auto result = hashMap->findByValue(value);
+        animateOperation("Search by Value");
+        updateStepTrace();
+        
+        // No bucket highlighting for value search (searches all buckets)
+    }
+}
+
+void HashMapVisualization::animateSearchResult(const QString &key, bool found)
+{
+    // Convert key to QVariant for proper hashing
+    QVariant keyVariant = convertStringToVariant(key, hashMap->getKeyType());
+    if (!keyVariant.isValid()) return;
+    
+    // Calculate which bucket the key would be in using HashMap's indexFor method
+    const int bucketIndex = hashMap->indexFor(keyVariant, 10);
+    
+    // Step 1: Show hash calculation (like Binary Tree's step-by-step approach)
+    hashMap->addStepToHistory(QString("🔍 Searching for key: %1").arg(key));
+    hashMap->addStepToHistory(QString("📊 Calculating hash for key..."));
+    updateStepTrace();
+    
+    QTimer::singleShot(800, [this, key, bucketIndex, found]() {
+        // Step 2: Show which bucket to check
+        hashMap->addStepToHistory(QString("🎯 Hash points to bucket %1").arg(bucketIndex));
+        updateStepTrace();
+        
+        // Clear any existing highlights
+        if (highlightRect) {
+            scene->removeItem(highlightRect);
+            delete highlightRect;
+            highlightRect = nullptr;
+        }
+        
+        // Create highlight rectangle for the target bucket
+        const int bucketCount = 10;
+        const int totalWidth = bucketCount * (BUCKET_WIDTH + BUCKET_SPACING) - BUCKET_SPACING;
+        const int startX = -totalWidth / 2;
+        const int x = startX + bucketIndex * (BUCKET_WIDTH + BUCKET_SPACING);
+        const int y = 0;
+        
+        // Calculate bucket height (same logic as drawBuckets)
+        const QVector<QVector<QPair<QVariant, QVariant>>> bucketContents = hashMap->getBucketContents();
+        int bucketHeight = BUCKET_HEIGHT;
+        if (bucketIndex < bucketContents.size() && !bucketContents[bucketIndex].isEmpty()) {
+            bucketHeight = BUCKET_HEIGHT + (bucketContents[bucketIndex].size() * 30);
+        }
+        
+        // Create highlight effect (like Binary Tree node highlighting)
+        highlightRect = scene->addRect(x - 3, y - 3, BUCKET_WIDTH + 6, bucketHeight + 6,
+                                      QPen(found ? QColor(40, 167, 69, 200) : QColor(220, 53, 69, 200), 4),
+                                      QBrush(Qt::transparent));
+        highlightRect->setZValue(10);
+        
+        QTimer::singleShot(800, [this, key, found]() {
+            // Step 3: Show search result
+            if (found) {
+                hashMap->addStepToHistory(QString("✅ Key '%1' found in bucket!").arg(key));
+            } else {
+                hashMap->addStepToHistory(QString("❌ Key '%1' not found in bucket").arg(key));
+            }
+            updateStepTrace();
+            
+            // Step 4: Fade out highlight after showing result (like Binary Tree)
+            QTimer::singleShot(1200, [this]() {
+                if (highlightRect) {
+                    scene->removeItem(highlightRect);
+                    delete highlightRect;
+                    highlightRect = nullptr;
+                }
+            });
+        });
+    });
+}
+
+void HashMapVisualization::onDeleteClicked()
+{
+    const QString keyStr = keyInput->text().trimmed();
+    
+    if (keyStr.isEmpty()) {
         keyInput->setStyleSheet(keyInput->styleSheet() + "border-color: #dc3545 !important;");
         QTimer::singleShot(2000, [this]() {
             keyInput->setStyleSheet(keyInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
@@ -723,62 +1064,10 @@ void HashMapVisualization::onSearchClicked()
         return;
     }
     
-    // Perform search and get result
-    auto result = hashMap->get(key);
-    animateOperation("Search");
+    // Convert string to appropriate QVariant type
+    QVariant key = convertStringToVariant(keyStr, hashMap->getKeyType());
     
-    // Animate the search by highlighting the target bucket
-    animateSearchResult(key, result.has_value());
-}
-
-void HashMapVisualization::animateSearchResult(const QString &key, bool found)
-{
-    // Calculate which bucket the key would be in
-    const size_t hash = static_cast<size_t>(qHash(key));
-    const int bucketIndex = static_cast<int>(hash % 10);
-    
-    // Clear any existing highlights
-    if (highlightRect) {
-        scene->removeItem(highlightRect);
-        delete highlightRect;
-        highlightRect = nullptr;
-    }
-    
-    // Create highlight rectangle for the target bucket
-    const int bucketCount = 10;
-    const int totalWidth = bucketCount * (BUCKET_WIDTH + BUCKET_SPACING) - BUCKET_SPACING;
-    const int startX = -totalWidth / 2;
-    const int x = startX + bucketIndex * (BUCKET_WIDTH + BUCKET_SPACING);
-    const int y = 0;
-    
-    // Calculate bucket height (same logic as drawBuckets)
-    const QVector<QVector<QPair<QString, QString>>> bucketContents = hashMap->getBucketContents();
-    int bucketHeight = BUCKET_HEIGHT;
-    if (bucketIndex < bucketContents.size() && !bucketContents[bucketIndex].isEmpty()) {
-        bucketHeight = BUCKET_HEIGHT + (bucketContents[bucketIndex].size() * 30);
-    }
-    
-    // Create highlight effect
-    highlightRect = scene->addRect(x - 3, y - 3, BUCKET_WIDTH + 6, bucketHeight + 6,
-                                  QPen(found ? QColor(40, 167, 69, 200) : QColor(220, 53, 69, 200), 4),
-                                  QBrush(Qt::transparent));
-    highlightRect->setZValue(10);
-    
-    // Use a timer for highlight fade instead of QPropertyAnimation on QGraphicsItem
-    QTimer::singleShot(2000, [this]() {
-        if (highlightRect) {
-            scene->removeItem(highlightRect);
-            delete highlightRect;
-            highlightRect = nullptr;
-        }
-    });
-}
-
-void HashMapVisualization::onDeleteClicked()
-{
-    const QString key = keyInput->text().trimmed();
-    
-    if (key.isEmpty()) {
+    if (!key.isValid()) {
         keyInput->setStyleSheet(keyInput->styleSheet() + "border-color: #dc3545 !important;");
         QTimer::singleShot(2000, [this]() {
             keyInput->setStyleSheet(keyInput->styleSheet().replace("border-color: #dc3545 !important;", ""));
@@ -790,7 +1079,7 @@ void HashMapVisualization::onDeleteClicked()
     animateOperation("Delete");
     
     // Animate the deletion result
-    animateSearchResult(key, removed);
+    animateSearchResult(keyStr, removed);
     
     keyInput->clear();
 }
@@ -821,13 +1110,50 @@ void HashMapVisualization::onClearClicked()
 
 void HashMapVisualization::onRandomizeClicked()
 {
-    // Add some random key-value pairs with consistent types
-    QStringList sampleKeys = {"apple", "banana", "cherry", "date", "fig", "grape"};
-    QStringList sampleValues = {"red", "yellow", "dark", "brown", "green", "purple"};
+    // Generate random data based on selected types
+    HashMap::DataType keyType = hashMap->getKeyType();
+    HashMap::DataType valueType = hashMap->getValueType();
     
     for (int i = 0; i < 5; ++i) {
-        const int idx = QRandomGenerator::global()->bounded(sampleKeys.size());
-        hashMap->put(sampleKeys[idx], sampleValues[idx]);
+        QVariant key, value;
+        
+        // Generate random key based on type
+        switch (keyType) {
+            case HashMap::STRING: {
+                QStringList keys = {"apple", "banana", "cherry", "date", "fig", "grape", "kiwi", "lemon"};
+                key = keys[QRandomGenerator::global()->bounded(keys.size())];
+                break;
+            }
+            case HashMap::INTEGER:
+                key = QRandomGenerator::global()->bounded(1, 100);
+                break;
+            case HashMap::DOUBLE:
+                key = QRandomGenerator::global()->generateDouble() * 100.0;
+                break;
+            case HashMap::FLOAT:
+                key = static_cast<float>(QRandomGenerator::global()->generateDouble() * 100.0f);
+                break;
+        }
+        
+        // Generate random value based on type
+        switch (valueType) {
+            case HashMap::STRING: {
+                QStringList values = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "brown"};
+                value = values[QRandomGenerator::global()->bounded(values.size())];
+                break;
+            }
+            case HashMap::INTEGER:
+                value = QRandomGenerator::global()->bounded(1, 1000);
+                break;
+            case HashMap::DOUBLE:
+                value = QRandomGenerator::global()->generateDouble() * 1000.0;
+                break;
+            case HashMap::FLOAT:
+                value = static_cast<float>(QRandomGenerator::global()->generateDouble() * 1000.0f);
+                break;
+        }
+        
+        hashMap->put(key, value);
     }
     
     animateOperation("Randomize");

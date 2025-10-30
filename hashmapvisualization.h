@@ -21,6 +21,8 @@
 #include <QSequentialAnimationGroup>
 #include <QScrollArea>
 #include <QSplitter>
+#include <QComboBox>
+#include <QGroupBox>
 #include "hashmap.h"
 
 class HashMapVisualization : public QWidget
@@ -44,18 +46,25 @@ private slots:
     void onDeleteClicked();
     void onClearClicked();
     void onRandomizeClicked();
+    void onTypeChanged();
     void updateVisualization();
     void updateStepTrace();
 
 private:
     void setupUI();
     void setupVisualizationArea();
-    void setupControlPanel();
-    void setupStepTracePanel();
+    void setupRightPanel();
+    void setupTypeSelection();
+    void setupControls();
+    void setupStats();
+    void setupStatsTopLeft();
+    void setupStepTrace();
+    void setupStepTraceTop();
     void drawBuckets();
     void animateOperation(const QString &operation);
     void animateSearchResult(const QString &key, bool found);
     void showStats();
+    QVariant convertStringToVariant(const QString &str, HashMap::DataType type);
 
     // UI Components
     QSplitter *mainSplitter;
@@ -69,8 +78,17 @@ private:
     QGraphicsView *visualizationView;
     QGraphicsScene *scene;
     
-    // Control panel
-    QWidget *controlPanel;
+    
+    // Right panel - controls and step trace
+    QVBoxLayout *rightLayout;
+    
+    // Type selection
+    QGroupBox *typeGroup;
+    QComboBox *keyTypeCombo;
+    QComboBox *valueTypeCombo;
+    
+    // Controls
+    QGroupBox *controlGroup;
     QLineEdit *keyInput;
     QLineEdit *valueInput;
     QPushButton *insertButton;
@@ -79,14 +97,14 @@ private:
     QPushButton *clearButton;
     QPushButton *randomizeButton;
     
-    // Stats panel
+    // Stats
+    QGroupBox *statsGroup;
     QLabel *sizeLabel;
     QLabel *bucketCountLabel;
     QLabel *loadFactorLabel;
     
-    // Right panel - step trace
-    QVBoxLayout *rightLayout;
-    QLabel *stepsTitle;
+    // Step trace
+    QGroupBox *traceGroup;
     QListWidget *stepsList;
     
     // Data and visualization
