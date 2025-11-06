@@ -11,6 +11,7 @@
 #include <QSplitterHandle>
 #include <memory>
 
+
 // Define static constants
 const int HashMapVisualization::BUCKET_WIDTH = 80;
 const int HashMapVisualization::BUCKET_HEIGHT = 60;
@@ -56,12 +57,10 @@ void HashMapVisualization::setupUI()
 
     setupVisualizationArea();
     setupRightPanel();
-
     // Set splitter proportions (65% visualization, 35% controls+trace)
     mainSplitter->addWidget(leftPanel);
     mainSplitter->addWidget(rightPanel);
     mainSplitter->setSizes({780, 420});
-
     // Main layout
     QHBoxLayout *mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -76,7 +75,6 @@ void HashMapVisualization::setupVisualizationArea()
     leftLayout = new QVBoxLayout(leftPanel);
     leftLayout->setContentsMargins(40, 30, 20, 30);
     leftLayout->setSpacing(25);
-
     // Header with back button and title
     QHBoxLayout *headerLayout = new QHBoxLayout();
 
@@ -103,7 +101,6 @@ void HashMapVisualization::setupVisualizationArea()
         }
     )");
     connect(backButton, &QPushButton::clicked, this, &HashMapVisualization::onBackClicked);
-
     titleLabel = new QLabel("Generic Hash Table");
     QFont titleFont;
     QStringList preferredFonts = {"Segoe UI", "Poppins", "SF Pro Display", "Arial"};
@@ -128,10 +125,10 @@ void HashMapVisualization::setupVisualizationArea()
 
     // Stats at top-left of visualization area
     setupStatsTopLeft();
-
+    
     // Visualization area with gradient background (fixed size, no scroll)
     scene = new QGraphicsScene(this);
-
+    
     visualizationView = new QGraphicsView(scene);
     visualizationView->setRenderHint(QPainter::Antialiasing);
     visualizationView->setFixedHeight(450);
@@ -146,7 +143,7 @@ void HashMapVisualization::setupVisualizationArea()
                 stop:1 rgba(240, 247, 255, 0.98));
         }
     )");
-
+    
     // Add drop shadow to visualization area
     QGraphicsDropShadowEffect *viewShadow = new QGraphicsDropShadowEffect();
     viewShadow->setBlurRadius(20);
@@ -154,9 +151,9 @@ void HashMapVisualization::setupVisualizationArea()
     viewShadow->setYOffset(6);
     viewShadow->setColor(QColor(74, 144, 226, 25));
     visualizationView->setGraphicsEffect(viewShadow);
-
+    
     leftLayout->addWidget(visualizationView, 1);
-
+    
     // Bottom note about bucket limitation
     QLabel *bucketNote = new QLabel(QString("* Buckets shown: %1").arg(hashMap->bucketCount()));
     bucketNote->setStyleSheet(R"(
@@ -180,7 +177,6 @@ void HashMapVisualization::setupStatsTopLeft()
     sizeLabel = new QLabel("Size: 0");
     bucketCountLabel = new QLabel(QString("Buckets: %1").arg(hashMap->bucketCount()));
     loadFactorLabel = new QLabel("Load Factor: 0.00");
-
     QString statsStyle = R"(
         QLabel {
             color: #34495e;
@@ -202,7 +198,6 @@ void HashMapVisualization::setupStatsTopLeft()
     statsLayout->addWidget(bucketCountLabel);
     statsLayout->addWidget(loadFactorLabel);
     statsLayout->addStretch();
-
     leftLayout->addLayout(statsLayout);
 }
 
@@ -1021,8 +1016,8 @@ void HashMapVisualization::onSearchClicked()
         animateOperation("Search by Value");
         showAlgorithm("Search by Value");
 
-        // Animate searching through all buckets
-        animateSearchByValue(valueStr, result.has_value());
+    // Animate searching through all buckets
+    animateSearchByValue(valueStr, result.has_value());
     }
 }
 

@@ -81,15 +81,12 @@ private:
     QGraphicsView *visualizationView;
     QGraphicsScene *scene;
 
-
     // Right panel - controls and step trace
     QVBoxLayout *rightLayout;
-
     // Type selection
     QGroupBox *typeGroup;
     QComboBox *keyTypeCombo;
     QComboBox *valueTypeCombo;
-
     // Controls
     QGroupBox *controlGroup;
     QLineEdit *keyInput;
@@ -99,7 +96,6 @@ private:
     QPushButton *deleteButton;
     QPushButton *clearButton;
     QPushButton *randomizeButton;
-
     // Stats
     QGroupBox *statsGroup;
     QLabel *sizeLabel;

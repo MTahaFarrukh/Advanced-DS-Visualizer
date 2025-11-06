@@ -55,7 +55,6 @@ public:
     // Type conversion helpers
     static QString dataTypeToString(DataType type);
     static QString variantToDisplayString(const QVariant &var);
-
     // Hash function (public for visualization)
     int indexFor(const QVariant &key, int bucketCount) const;
 

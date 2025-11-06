@@ -405,7 +405,6 @@ QVector<int> HashMap::bucketSizes() const {
 QVector<QVector<QPair<QVariant, QVariant>>> HashMap::getBucketContents() const {
     QVector<QVector<QPair<QVariant, QVariant>>> contents;
     contents.reserve(static_cast<int>(buckets_.size()));
-
     for (const auto &chain : buckets_) {
         QVector<QPair<QVariant, QVariant>> bucketItems;
         for (const auto &node : chain) {
@@ -413,7 +412,6 @@ QVector<QVector<QPair<QVariant, QVariant>>> HashMap::getBucketContents() const {
         }
         contents.push_back(bucketItems);
     }
-
     return contents;
 }
 
