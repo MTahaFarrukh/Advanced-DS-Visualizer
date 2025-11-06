@@ -2,32 +2,39 @@
 
 #include <QString>
 #include <QVector>
+#include <QVariant>
 #include <QHashFunctions>
 #include <forward_list>
 #include <optional>
 #include <vector>
 
-// Open-chaining HashMap specialized for QString keys and values.
+// Generic HashMap supporting multiple data types for keys and values.
 // Instrumented with a human-readable step trace for visualization.
 class HashMap {
 public:
+    enum DataType {
+        STRING,
+        INTEGER,
+        DOUBLE,
+        FLOAT,
+        CHAR
+    };
+
     explicit HashMap(int initialBucketCount = 16, float maxLoadFactor = 0.75f);
 
-    // Inserts a new key/value. Returns true if a new element was inserted,
-    // false if an existing key was updated (no size change).
-    bool insert(const QString &key, const QString &value);
+    // Set data types for key and value
+    void setKeyType(DataType type) { keyType_ = type; }
+    void setValueType(DataType type) { valueType_ = type; }
+    DataType getKeyType() const { return keyType_; }
+    DataType getValueType() const { return valueType_; }
 
-    // Upsert variant: always assigns value (inserts if missing, updates if present).
-    void put(const QString &key, const QString &value);
-
-    // Looks up a key and returns the value if found.
-    // This method records a detailed step trace for UI display.
-    std::optional<QString> get(const QString &key);
-
-    // Erases a key if present. Returns true if something was removed.
-    bool erase(const QString &key);
-
-    bool contains(const QString &key);
+    // Generic insert/put methods using QVariant
+    bool insert(const QVariant &key, const QVariant &value);
+    void put(const QVariant &key, const QVariant &value);
+    std::optional<QVariant> get(const QVariant &key);
+    bool erase(const QVariant &key);
+    bool contains(const QVariant &key);
+    std::optional<QVariant> findByValue(const QVariant &value);
 
     void clear();
 
@@ -41,28 +48,34 @@ public:
     // Visualization helpers
     const QVector<QString> &lastSteps() const;
     void clearSteps();
+    void addStepToHistory(const QString &step);
     QVector<int> bucketSizes() const;
+    QVector<QVector<QPair<QVariant, QVariant>>> getBucketContents() const;
+
+    // Type conversion helpers
+    static QString dataTypeToString(DataType type);
+    static QString variantToDisplayString(const QVariant &var);
+
+    // Hash function (public for visualization)
+    int indexFor(const QVariant &key, int bucketCount) const;
 
 private:
     struct Node {
-        QString key;
-        QString value;
+        QVariant key;
+        QVariant value;
     };
 
     std::vector<std::forward_list<Node>> buckets_;
     int numElements_ = 0;
     float maxLoadFactor_ = 0.75f;
-    QVector<QString> lastSteps_;
-
-    inline int indexFor(const QString &key, int bucketCount) const {
-        // qHash returns a 32-bit unsigned; cast to size_t for modulo math
-        const size_t hash = static_cast<size_t>(qHash(key));
-        return static_cast<int>(hash % static_cast<size_t>(bucketCount));
-    }
+    QVector<QString> stepHistory_;  // Persistent history
+    DataType keyType_ = STRING;
+    DataType valueType_ = STRING;
 
     void addStep(const QString &text);
-    bool emplaceOrAssign(const QString &key, const QString &value, bool assignIfExists);
+    bool emplaceOrAssign(const QVariant &key, const QVariant &value, bool assignIfExists);
     void maybeGrow();
+    bool validateType(const QVariant &value, DataType expectedType) const;
 };
 
 
