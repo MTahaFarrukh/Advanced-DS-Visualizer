@@ -4,6 +4,7 @@
 #include <QFontDatabase>
 #include <QMessageBox>
 #include <QResizeEvent>
+#include <QDateTime>
 #include <QtMath>
 
 GraphVisualization::GraphVisualization(QWidget *parent)
@@ -32,7 +33,7 @@ void GraphVisualization::setupUI()
     QVBoxLayout *topSection = new QVBoxLayout();
     topSection->setSpacing(15);
 
-    backButton = new QPushButton("← Back to Menu", this);
+    backButton = new QPushButton("← Back to Operations", this);
     backButton->setFixedSize(160, 38);
     backButton->setCursor(Qt::PointingHandCursor);
     QFont buttonFont("Segoe UI", 11);
@@ -67,12 +68,14 @@ void GraphVisualization::setupUI()
 
     mainLayout->addLayout(topSection);
 
-    // Controls - use a more organized layout
+    // Controls - use a more organized and responsive layout
     QVBoxLayout *controlsLayout = new QVBoxLayout();
-    controlsLayout->setSpacing(15);
+    controlsLayout->setSpacing(12);
+    controlsLayout->setContentsMargins(0, 0, 0, 0);
 
     addVertexButton = new QPushButton("Add Vertex", this);
-    addVertexButton->setFixedSize(130, 38);
+    addVertexButton->setMinimumSize(130, 38);
+    addVertexButton->setMaximumSize(130, 38);
     addVertexButton->setCursor(Qt::PointingHandCursor);
     addVertexButton->setStyleSheet(R"(
         QPushButton {
@@ -91,7 +94,8 @@ void GraphVisualization::setupUI()
     edgeFromCombo = new QComboBox(this);
     edgeToCombo = new QComboBox(this);
     addEdgeButton = new QPushButton("Add Edge", this);
-    addEdgeButton->setFixedSize(120, 38);
+    addEdgeButton->setMinimumSize(120, 38);
+    addEdgeButton->setMaximumSize(120, 38);
     addEdgeButton->setCursor(Qt::PointingHandCursor);
     addEdgeButton->setStyleSheet(R"(
         QPushButton {
@@ -109,7 +113,8 @@ void GraphVisualization::setupUI()
 
     removeVertexCombo = new QComboBox(this);
     removeVertexButton = new QPushButton("Remove Vertex", this);
-    removeVertexButton->setFixedSize(150, 38);
+    removeVertexButton->setMinimumSize(150, 38);
+    removeVertexButton->setMaximumSize(150, 38);
     removeVertexButton->setCursor(Qt::PointingHandCursor);
     removeVertexButton->setStyleSheet(R"(
         QPushButton {
@@ -126,7 +131,8 @@ void GraphVisualization::setupUI()
     removeEdgeFromCombo = new QComboBox(this);
     removeEdgeToCombo = new QComboBox(this);
     removeEdgeButton = new QPushButton("Remove Edge", this);
-    removeEdgeButton->setFixedSize(140, 38);
+    removeEdgeButton->setMinimumSize(140, 38);
+    removeEdgeButton->setMaximumSize(140, 38);
     removeEdgeButton->setCursor(Qt::PointingHandCursor);
     removeEdgeButton->setStyleSheet(R"(
         QPushButton {
@@ -142,7 +148,8 @@ void GraphVisualization::setupUI()
 
     startCombo = new QComboBox(this);
     bfsButton = new QPushButton("Run BFS", this);
-    bfsButton->setFixedSize(120, 38);
+    bfsButton->setMinimumSize(120, 38);
+    bfsButton->setMaximumSize(120, 38);
     bfsButton->setCursor(Qt::PointingHandCursor);
     bfsButton->setStyleSheet(R"(
         QPushButton {
@@ -159,12 +166,14 @@ void GraphVisualization::setupUI()
     )");
 
     dfsButton = new QPushButton("Run DFS", this);
-    dfsButton->setFixedSize(120, 38);
+    dfsButton->setMinimumSize(120, 38);
+    dfsButton->setMaximumSize(120, 38);
     dfsButton->setCursor(Qt::PointingHandCursor);
     dfsButton->setStyleSheet(bfsButton->styleSheet());
 
     clearButton = new QPushButton("Clear Graph", this);
-    clearButton->setFixedSize(140, 38);
+    clearButton->setMinimumSize(140, 38);
+    clearButton->setMaximumSize(140, 38);
     clearButton->setCursor(Qt::PointingHandCursor);
     clearButton->setStyleSheet(R"(
         QPushButton {
@@ -181,7 +190,8 @@ void GraphVisualization::setupUI()
     // Input field for vertex ID
     vertexInput = new QLineEdit(this);
     vertexInput->setPlaceholderText("Vertex ID (optional)");
-    vertexInput->setFixedSize(120, 38);
+    vertexInput->setMinimumSize(120, 38);
+    vertexInput->setMaximumSize(120, 38);
     vertexInput->setAlignment(Qt::AlignCenter);
     vertexInput->setStyleSheet(R"(
         QLineEdit {
@@ -196,23 +206,27 @@ void GraphVisualization::setupUI()
         }
     )");
 
-    // Helper to create styled labels
-    auto createLabel = [this](const QString &text) -> QLabel* {
+    // Helper to create styled labels with consistent sizing
+    auto createLabel = [this](const QString &text, int minWidth = 110) -> QLabel* {
         QLabel *lbl = new QLabel(text, this);
-        lbl->setStyleSheet("color: #6b5b95; font-size: 11px; min-width: 100px;");
+        lbl->setStyleSheet(QString("color: #6b5b95; font-size: 11px; min-width: %1px;").arg(minWidth));
+        lbl->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         return lbl;
     };
 
     // Row 1: Add Vertex and Add Edge
     QHBoxLayout *row1 = new QHBoxLayout();
-    row1->setSpacing(10);
-    row1->addWidget(createLabel("Add Vertex:"));
+    row1->setSpacing(8);
+    row1->setContentsMargins(0, 0, 0, 0);
+    row1->addWidget(createLabel("Add Vertex:", 110));
     row1->addWidget(vertexInput);
     row1->addWidget(addVertexButton);
-    row1->addSpacing(30);
-    row1->addWidget(createLabel("Edge:"));
+    row1->addSpacing(25);
+    row1->addWidget(createLabel("Edge:", 50));
     row1->addWidget(edgeFromCombo);
-    row1->addWidget(createLabel("→"));
+    QLabel *arrow1 = createLabel("→", 20);
+    arrow1->setAlignment(Qt::AlignCenter);
+    row1->addWidget(arrow1);
     row1->addWidget(edgeToCombo);
     row1->addWidget(addEdgeButton);
     row1->addStretch();
@@ -220,14 +234,17 @@ void GraphVisualization::setupUI()
 
     // Row 2: Remove Vertex and Remove Edge
     QHBoxLayout *row2 = new QHBoxLayout();
-    row2->setSpacing(10);
-    row2->addWidget(createLabel("Remove Vertex:"));
+    row2->setSpacing(8);
+    row2->setContentsMargins(0, 0, 0, 0);
+    row2->addWidget(createLabel("Remove Vertex:", 110));
     row2->addWidget(removeVertexCombo);
     row2->addWidget(removeVertexButton);
-    row2->addSpacing(30);
-    row2->addWidget(createLabel("Remove Edge:"));
+    row2->addSpacing(25);
+    row2->addWidget(createLabel("Remove Edge:", 100));
     row2->addWidget(removeEdgeFromCombo);
-    row2->addWidget(createLabel("→"));
+    QLabel *arrow2 = createLabel("→", 20);
+    arrow2->setAlignment(Qt::AlignCenter);
+    row2->addWidget(arrow2);
     row2->addWidget(removeEdgeToCombo);
     row2->addWidget(removeEdgeButton);
     row2->addStretch();
@@ -235,12 +252,13 @@ void GraphVisualization::setupUI()
 
     // Row 3: Traversal and Clear
     QHBoxLayout *row3 = new QHBoxLayout();
-    row3->setSpacing(10);
-    row3->addWidget(createLabel("Traversal:"));
+    row3->setSpacing(8);
+    row3->setContentsMargins(0, 0, 0, 0);
+    row3->addWidget(createLabel("Traversal:", 110));
     row3->addWidget(startCombo);
     row3->addWidget(bfsButton);
     row3->addWidget(dfsButton);
-    row3->addSpacing(30);
+    row3->addSpacing(25);
     row3->addWidget(clearButton);
     row3->addStretch();
     controlsLayout->addLayout(row3);
@@ -248,10 +266,12 @@ void GraphVisualization::setupUI()
     // Tidy combo styling
     restyleCombos();
 
-    // Wrap controls in a widget with centered alignment
+    // Wrap controls in a widget with centered alignment and max width for better responsiveness
     QWidget *controlsWidget = new QWidget(this);
     controlsWidget->setLayout(controlsLayout);
+    controlsWidget->setMaximumWidth(1200); // Max width to prevent over-stretching
     QHBoxLayout *controlsRow = new QHBoxLayout();
+    controlsRow->setContentsMargins(0, 0, 0, 0);
     controlsRow->addStretch();
     controlsRow->addWidget(controlsWidget);
     controlsRow->addStretch();
@@ -264,7 +284,54 @@ void GraphVisualization::setupUI()
     statusLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(statusLabel);
 
-    mainLayout->addStretch();
+    // Split view - Graph and History (responsive layout)
+    QHBoxLayout *contentLayout = new QHBoxLayout();
+    contentLayout->setSpacing(15);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+
+    // History panel (30% width, minimum 250px)
+    QVBoxLayout *historyLayout = new QVBoxLayout();
+    historyLayout->setSpacing(8);
+    historyLayout->setContentsMargins(0, 0, 0, 0);
+    
+    QLabel *historyTitle = new QLabel("Operation History", this);
+    historyTitle->setStyleSheet("color: #2d1b69; font-weight: bold; font-size: 14px;");
+    historyLayout->addWidget(historyTitle);
+
+    historyList = new QListWidget(this);
+    historyList->setMinimumWidth(250);
+    historyList->setStyleSheet(R"(
+        QListWidget {
+            background-color: white;
+            border: 2px solid #d0c5e8;
+            border-radius: 8px;
+            padding: 5px;
+            font-size: 10px;
+            color: #2d1b69;
+        }
+        QListWidget::item {
+            padding: 6px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #2d1b69;
+        }
+        QListWidget::item:hover {
+            background-color: #f5f0ff;
+        }
+        QListWidget::item:selected {
+            background-color: #e8e0ff;
+            color: #2d1b69;
+        }
+    )");
+    historyLayout->addWidget(historyList);
+
+    // Use stretch factors: 7 for graph area, 3 for history (70/30 split)
+    contentLayout->addStretch(7);
+    QWidget *historyWidget = new QWidget(this);
+    historyWidget->setLayout(historyLayout);
+    historyWidget->setMinimumWidth(250);
+    contentLayout->addWidget(historyWidget, 3);
+
+    mainLayout->addLayout(contentLayout, 1);
     setLayout(mainLayout);
 
     // Connect signals
@@ -290,6 +357,7 @@ void GraphVisualization::restyleCombos()
             border-radius: 16px;
             padding: 6px 10px;
             min-width: 90px;
+            max-width: 90px;
             color: #2d1b69;
         }
         QComboBox:focus {
@@ -298,6 +366,8 @@ void GraphVisualization::restyleCombos()
     )";
     for (QComboBox *cb : {edgeFromCombo, edgeToCombo, removeVertexCombo, removeEdgeFromCombo, removeEdgeToCombo, startCombo}) {
         cb->setStyleSheet(comboStyle);
+        cb->setMinimumSize(90, 38);
+        cb->setMaximumSize(90, 38);
     }
 }
 
@@ -346,7 +416,7 @@ void GraphVisualization::onBackClicked()
         animTimer->stop();
         traversalType = TraversalType::None;
     }
-    emit backToMenu();
+    emit backToOperations();
 }
 
 void GraphVisualization::onAddVertexClicked()
@@ -380,6 +450,7 @@ void GraphVisualization::onAddVertexClicked()
     refreshCombos();
     vertexInput->clear();
     statusLabel->setText(QString("Vertex %1 added.").arg(id));
+    addHistory("ADD_VERTEX", id, -1, QString("Vertex %1 added to graph").arg(id));
     update();
 }
 
@@ -398,9 +469,11 @@ void GraphVisualization::onAddEdgeClicked()
     }
     if (addEdgeInternal(u, v)) {
         statusLabel->setText(QString("Edge %1-%2 added.").arg(u).arg(v));
+        addHistory("ADD_EDGE", u, v, QString("Edge %1-%2 added").arg(u).arg(v));
         update();
     } else {
         statusLabel->setText("Edge already exists or vertices missing.");
+        addHistory("ADD_EDGE", u, v, QString("Failed: Edge %1-%2 already exists").arg(u).arg(v));
     }
 }
 
@@ -413,7 +486,10 @@ void GraphVisualization::onRemoveVertexClicked()
         layoutNodes();
         refreshCombos();
         statusLabel->setText(QString("Vertex %1 removed.").arg(u));
+        addHistory("REMOVE_VERTEX", u, -1, QString("Vertex %1 and all its edges removed").arg(u));
         update();
+    } else {
+        addHistory("REMOVE_VERTEX", u, -1, QString("Failed: Vertex %1 not found").arg(u));
     }
 }
 
@@ -425,7 +501,10 @@ void GraphVisualization::onRemoveEdgeClicked()
     if (!ok1 || !ok2) return;
     if (removeEdgeInternal(u, v)) {
         statusLabel->setText(QString("Edge %1-%2 removed.").arg(u).arg(v));
+        addHistory("REMOVE_EDGE", u, v, QString("Edge %1-%2 removed").arg(u).arg(v));
         update();
+    } else {
+        addHistory("REMOVE_EDGE", u, v, QString("Failed: Edge %1-%2 not found").arg(u).arg(v));
     }
 }
 
@@ -439,8 +518,11 @@ void GraphVisualization::onClearClicked()
     traversalOrder.clear();
     traversalIndex = 0;
     animTimer->stop();
+    history.clear();
+    historyList->clear();
     refreshCombos();
     statusLabel->setText("Graph cleared! Add a vertex to begin.");
+    addHistory("CLEAR", -1, -1, "Entire graph cleared");
     update();
 }
 
@@ -482,6 +564,7 @@ void GraphVisualization::onStartBFS()
     setControlsEnabled(false);
     animTimer->start(700);
     statusLabel->setText("Running BFS...");
+    addHistory("BFS", s, -1, QString("BFS traversal started from vertex %1").arg(s));
 }
 
 void GraphVisualization::onStartDFS()
@@ -522,6 +605,7 @@ void GraphVisualization::onStartDFS()
     setControlsEnabled(false);
     animTimer->start(700);
     statusLabel->setText("Running DFS...");
+    addHistory("DFS", s, -1, QString("DFS traversal started from vertex %1").arg(s));
 }
 
 void GraphVisualization::onAnimationStep()
@@ -533,10 +617,12 @@ void GraphVisualization::onAnimationStep()
     }
 
     if (traversalIndex >= traversalOrder.size()) {
+        QString algo = (traversalType == TraversalType::BFS) ? "BFS" : "DFS";
         animTimer->stop();
         traversalType = TraversalType::None;
         setControlsEnabled(true);
         statusLabel->setText("Traversal complete.");
+        addHistory(algo, -1, -1, QString("%1 traversal completed. Visited %2 vertices").arg(algo).arg(traversalOrder.size()));
         update();
         return;
     }
@@ -553,10 +639,12 @@ void GraphVisualization::layoutNodes()
     if (nodes.isEmpty()) return;
     
     // Calculate canvas area dynamically based on current widget size
+    // Canvas takes 70% width (history panel takes 30%)
     int topMargin = 320;
     int bottomMargin = 30;
     int sideMargin = 30;
-    QRect canvasRect(sideMargin, topMargin, width() - 2 * sideMargin, height() - topMargin - bottomMargin);
+    int canvasWidth = (int)(width() * 0.65);
+    QRect canvasRect(sideMargin, topMargin, canvasWidth, height() - topMargin - bottomMargin);
     
     if (canvasRect.width() <= 0 || canvasRect.height() <= 0) return;
     
@@ -629,7 +717,9 @@ void GraphVisualization::paintEvent(QPaintEvent *event)
     int sideMargin = 30;
     int canvasY = topMargin;
     int canvasHeight = height() - canvasY - bottomMargin;
-    QRect canvasRect(sideMargin, canvasY, width() - 2 * sideMargin, canvasHeight);
+    // Canvas takes 70% width (history panel takes 30%)
+    int canvasWidth = (int)(width() * 0.65);
+    QRect canvasRect(sideMargin, canvasY, canvasWidth, canvasHeight);
     
     if (canvasRect.width() > 0 && canvasRect.height() > 0) {
         painter.setPen(Qt::NoPen);
@@ -699,6 +789,51 @@ void GraphVisualization::drawNode(QPainter &painter, const GraphNode &node) cons
     painter.setFont(font);
     QRectF r(node.pos.x() - NODE_RADIUS, node.pos.y() - NODE_RADIUS, NODE_RADIUS * 2, NODE_RADIUS * 2);
     painter.drawText(r, Qt::AlignCenter, QString::number(node.id));
+}
+
+void GraphVisualization::addHistory(const QString &operation, int value1, int value2, const QString &description)
+{
+    GraphHistoryEntry entry;
+    entry.operation = operation;
+    entry.value1 = value1;
+    entry.value2 = value2;
+    entry.description = description;
+    entry.timestamp = getCurrentTime();
+
+    history.append(entry);
+
+    QString displayText;
+    if (value2 == -1) {
+        if (value1 == -1) {
+            displayText = QString("[%1] %2: %3")
+                              .arg(entry.timestamp)
+                              .arg(entry.operation)
+                              .arg(entry.description);
+        } else {
+            displayText = QString("[%1] %2 (%3): %4")
+                              .arg(entry.timestamp)
+                              .arg(entry.operation)
+                              .arg(value1)
+                              .arg(entry.description);
+        }
+    } else {
+        displayText = QString("[%1] %2 (%3-%4): %5")
+                          .arg(entry.timestamp)
+                          .arg(entry.operation)
+                          .arg(value1)
+                          .arg(value2)
+                          .arg(entry.description);
+    }
+
+    QListWidgetItem *item = new QListWidgetItem(displayText);
+    item->setForeground(QColor("#2d1b69"));
+    historyList->addItem(item);
+    historyList->scrollToBottom();
+}
+
+QString GraphVisualization::getCurrentTime()
+{
+    return QDateTime::currentDateTime().toString("HH:mm:ss");
 }
 
 

@@ -14,6 +14,9 @@
 #include <QTimer>
 #include <QSet>
 #include <QHash>
+#include <QListWidget>
+#include <QVector>
+#include <QDateTime>
 
 struct GraphNode {
     int id;
@@ -22,6 +25,14 @@ struct GraphNode {
     bool visited;
     GraphNode() : id(-1), pos(0, 0), highlighted(false), visited(false) {}
     GraphNode(int nid, const QPointF &p) : id(nid), pos(p), highlighted(false), visited(false) {}
+};
+
+struct GraphHistoryEntry {
+    QString operation;
+    int value1;
+    int value2;
+    QString description;
+    QString timestamp;
 };
 
 class GraphVisualization : public QWidget
@@ -33,7 +44,7 @@ public:
     ~GraphVisualization();
 
 signals:
-    void backToMenu();
+    void backToOperations();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -70,6 +81,10 @@ private:
     void drawEdge(QPainter &painter, const QPointF &a, const QPointF &b, bool highlighted) const;
     void drawNode(QPainter &painter, const GraphNode &node) const;
 
+    // History/Logging
+    void addHistory(const QString &operation, int value1, int value2, const QString &description);
+    QString getCurrentTime();
+
     // Animation state
     enum class TraversalType { None, BFS, DFS };
     TraversalType traversalType;
@@ -101,10 +116,14 @@ private:
     QPushButton *dfsButton;
     QPushButton *clearButton;
 
+    // History panel
+    QListWidget *historyList;
+
     // Data
     QVector<GraphNode> nodes;
     QHash<int, QSet<int>> adjacency; // undirected, unweighted
     int nextId;
+    QVector<GraphHistoryEntry> history;
 
     // Drawing constants
     const int NODE_RADIUS = 24;

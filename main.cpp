@@ -59,30 +59,7 @@ int main(int argc, char *argv[])
                          // Store current data structure
                          currentDataStructure = dsName;
 
-                         // For Graph, skip theory/operation pages and go directly to visualization
-                         if (dsName == "Graph") {
-                             // Remove old visualization if exists
-                             if (currentGraphVisualization) {
-                                 mainWindow->removeWidget(currentGraphVisualization);
-                                 currentGraphVisualization->deleteLater();
-                                 currentGraphVisualization = nullptr;
-                             }
-                             
-                             // Create graph visualization directly
-                             currentGraphVisualization = new GraphVisualization();
-                             visualizationPageIndex = mainWindow->addWidget(currentGraphVisualization);
-
-                             // Connect back button to menu
-                             QObject::connect(currentGraphVisualization, &GraphVisualization::backToMenu,
-                                              [mainWindow, menuPageIndex]() {
-                                                  mainWindow->setCurrentIndex(menuPageIndex);
-                                              });
-
-                             mainWindow->setCurrentIndex(visualizationPageIndex);
-                             return;
-                         }
-
-                         // For other data structures, show theory page first
+                         // For all data structures, show theory page first
                          // Remove old theory page if exists
                          if (currentTheoryPage) {
                              mainWindow->removeWidget(currentTheoryPage);
@@ -204,7 +181,7 @@ int main(int argc, char *argv[])
                                                                        currentGraphVisualization = new GraphVisualization();
                                                                        visualizationPageIndex = mainWindow->addWidget(currentGraphVisualization);
 
-                                                                       QObject::connect(currentGraphVisualization, &GraphVisualization::backToMenu,
+                                                                       QObject::connect(currentGraphVisualization, &GraphVisualization::backToOperations,
                                                                                         [mainWindow, operationPageIndex]() {
                                                                                             mainWindow->setCurrentIndex(operationPageIndex);
                                                                                         });
