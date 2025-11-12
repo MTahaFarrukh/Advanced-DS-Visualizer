@@ -266,6 +266,18 @@
 	"HEADERS" : 
 	[
 		[
+			"D:/Adv DS Visualizer/AdvDS/hashmap.h",
+			"MU",
+			"EWIEGA46WW/moc_hashmap.cpp",
+			null
+		],
+		[
+			"D:/Adv DS Visualizer/AdvDS/hashmapvisualization.h",
+			"MU",
+			"EWIEGA46WW/moc_hashmapvisualization.cpp",
+			null
+		],
+		[
 			"D:/Adv DS Visualizer/AdvDS/homepage.h",
 			"MU",
 			"EWIEGA46WW/moc_homepage.cpp",
@@ -287,6 +299,24 @@
 			"D:/Adv DS Visualizer/AdvDS/operationpage.h",
 			"MU",
 			"EWIEGA46WW/moc_operationpage.cpp",
+			null
+		],
+		[
+			"D:/Adv DS Visualizer/AdvDS/redblacktree.h",
+			"MU",
+			"EWIEGA46WW/moc_redblacktree.cpp",
+			null
+		],
+		[
+			"D:/Adv DS Visualizer/AdvDS/theorypage.h",
+			"MU",
+			"EWIEGA46WW/moc_theorypage.cpp",
+			null
+		],
+		[
+			"D:/Adv DS Visualizer/AdvDS/treedeletion.h",
+			"MU",
+			"EWIEGA46WW/moc_treedeletion.cpp",
 			null
 		],
 		[
@@ -367,11 +397,16 @@
 	"SETTINGS_FILE" : "D:/Adv DS Visualizer/AdvDS/build/Desktop_Qt_6_8_1_MinGW_64_bit-Debug/CMakeFiles/AdvDS_autogen.dir/AutogenUsed.txt",
 	"SOURCES" : 
 	[
+		[ "D:/Adv DS Visualizer/AdvDS/hashmap.cpp", "MU", null ],
+		[ "D:/Adv DS Visualizer/AdvDS/hashmapvisualization.cpp", "MU", null ],
 		[ "D:/Adv DS Visualizer/AdvDS/homepage.cpp", "MU", null ],
 		[ "D:/Adv DS Visualizer/AdvDS/main.cpp", "MU", null ],
 		[ "D:/Adv DS Visualizer/AdvDS/mainwindow.cpp", "MU", null ],
 		[ "D:/Adv DS Visualizer/AdvDS/menupage.cpp", "MU", null ],
 		[ "D:/Adv DS Visualizer/AdvDS/operationpage.cpp", "MU", null ],
+		[ "D:/Adv DS Visualizer/AdvDS/redblacktree.cpp", "MU", null ],
+		[ "D:/Adv DS Visualizer/AdvDS/theorypage.cpp", "MU", null ],
+		[ "D:/Adv DS Visualizer/AdvDS/treedeletion.cpp", "MU", null ],
 		[ "D:/Adv DS Visualizer/AdvDS/treeinsertion.cpp", "MU", null ]
 	],
 	"UIC_OPTIONS" : [],

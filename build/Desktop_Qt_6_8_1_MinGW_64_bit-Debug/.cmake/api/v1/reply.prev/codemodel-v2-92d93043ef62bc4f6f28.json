@@ -7,7 +7,7 @@
 				{
 					"build" : ".",
 					"hasInstallRule" : true,
-					"jsonFile" : "directory-.-Debug-09d001f3213e5f75ab1c.json",
+					"jsonFile" : "directory-.-Debug-f24578725730c6cb7a53.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.16"
@@ -44,7 +44,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "AdvDS::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-AdvDS-Debug-233a4f7d2071af0b6ecd.json",
+					"jsonFile" : "target-AdvDS-Debug-9861824a7d37206816ce.json",
 					"name" : "AdvDS",
 					"projectIndex" : 0
 				},

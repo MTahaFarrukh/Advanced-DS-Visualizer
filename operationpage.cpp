@@ -24,7 +24,7 @@ void OperationPage::setupUI()
 {
     // Main layout
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(50, 40, 50, 40);
+    mainLayout->setContentsMargins(50, 25, 50, 40);
     mainLayout->setSpacing(0);
 
     // Create content container

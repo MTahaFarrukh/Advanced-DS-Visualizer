@@ -2,12 +2,15 @@
 #include <QScreen>
 #include <QRect>
 #include <QStackedWidget>
-#include <QTimer>
 #include "homepage.h"
 #include "menupage.h"
+#include "theorypage.h"
 #include "operationpage.h"
 #include "treeinsertion.h"
 #include "graphvisualization.h"
+#include "treedeletion.h"
+#include "hashmapvisualization.h"
+#include "redblacktree.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,9 +33,14 @@ int main(int argc, char *argv[])
     mainWindow->setCurrentIndex(homePageIndex);
 
     // Variables to track pages
+    TheoryPage *currentTheoryPage = nullptr;
     OperationPage *currentOperationPage = nullptr;
     TreeInsertion *currentTreeInsertion = nullptr;
     GraphVisualization *currentGraphVisualization = nullptr;
+    TreeDeletion *currentTreeDeletion = nullptr;
+    HashMapVisualization *currentHashMapVisualization = nullptr;
+    RedBlackTree *currentRedBlackTree = nullptr;
+    int theoryPageIndex = -1;
     int operationPageIndex = -1;
     int visualizationPageIndex = -1;
     QString currentDataStructure = "";
@@ -42,14 +50,16 @@ int main(int argc, char *argv[])
         mainWindow->setCurrentIndex(menuPageIndex);
     });
 
-    // Connect MenuPage navigation
+    // Connect MenuPage to TheoryPage navigation
     QObject::connect(menuPage, &MenuPage::dataStructureSelected,
-                     [mainWindow, &currentOperationPage, &operationPageIndex, &currentDataStructure,
-                      &currentTreeInsertion, &currentGraphVisualization, &visualizationPageIndex, menuPageIndex](const QString &dsName) {
+                     [mainWindow, menuPageIndex, &currentTheoryPage, &theoryPageIndex,
+                      &currentOperationPage, &operationPageIndex, &currentDataStructure,
+                      &currentTreeInsertion, &currentGraphVisualization, &currentTreeDeletion,
+                      &currentHashMapVisualization, &currentRedBlackTree, &visualizationPageIndex](const QString &dsName) {
                          // Store current data structure
                          currentDataStructure = dsName;
 
-                         // For Graph, skip operation page and go directly to visualization
+                         // For Graph, skip theory/operation pages and go directly to visualization
                          if (dsName == "Graph") {
                              // Remove old visualization if exists
                              if (currentGraphVisualization) {
@@ -72,52 +82,143 @@ int main(int argc, char *argv[])
                              return;
                          }
 
-                         // For other data structures, show operation page
-                         // Remove old operation page if exists
-                         if (currentOperationPage) {
-                             mainWindow->removeWidget(currentOperationPage);
-                             currentOperationPage->deleteLater();
+                         // For other data structures, show theory page first
+                         // Remove old theory page if exists
+                         if (currentTheoryPage) {
+                             mainWindow->removeWidget(currentTheoryPage);
+                             currentTheoryPage->deleteLater();
                          }
 
-                         // Create new operation page
-                         currentOperationPage = new OperationPage(dsName);
-                         operationPageIndex = mainWindow->addWidget(currentOperationPage);
+                         // Create new theory page
+                         currentTheoryPage = new TheoryPage(dsName);
+                         theoryPageIndex = mainWindow->addWidget(currentTheoryPage);
 
                          // Connect back button to menu
-                         QObject::connect(currentOperationPage, &OperationPage::backToMenu,
+                         QObject::connect(currentTheoryPage, &TheoryPage::backToMenu,
                                           [mainWindow, menuPageIndex]() {
                                               mainWindow->setCurrentIndex(menuPageIndex);
                                           });
 
-                         // Connect operation selection
-                         QObject::connect(currentOperationPage, &OperationPage::operationSelected,
-                                         [mainWindow, &currentTreeInsertion, &currentDataStructure, &visualizationPageIndex,
-                                          &operationPageIndex](const QString &operation) {
-                                              // Remove old visualization page if exists
-                                              if (currentTreeInsertion) {
-                                                  mainWindow->removeWidget(currentTreeInsertion);
-                                                  currentTreeInsertion->deleteLater();
-                                                  currentTreeInsertion = nullptr;
+                         // Connect "Try It Yourself" button to operation page
+                         QObject::connect(currentTheoryPage, &TheoryPage::tryItYourself,
+                                          [mainWindow, &currentOperationPage, &operationPageIndex,
+                                           &theoryPageIndex, &currentDataStructure, &currentTreeInsertion,
+                                           &currentGraphVisualization, &currentTreeDeletion,
+                                           &currentHashMapVisualization, &currentRedBlackTree, &visualizationPageIndex]() {
+                                              // Remove old operation page if exists
+                                              if (currentOperationPage) {
+                                                  mainWindow->removeWidget(currentOperationPage);
+                                                  currentOperationPage->deleteLater();
                                               }
 
-                                              // Create appropriate visualization based on data structure and operation
-                                              if (currentDataStructure == "Binary Tree" && operation == "Insertion") {
-                                                  currentTreeInsertion = new TreeInsertion();
-                                                  visualizationPageIndex = mainWindow->addWidget(currentTreeInsertion);
+                                              // Create new operation page
+                                              currentOperationPage = new OperationPage(currentDataStructure);
+                                              operationPageIndex = mainWindow->addWidget(currentOperationPage);
 
-                                                  // Connect back button to return to operations
-                                                  QObject::connect(currentTreeInsertion, &TreeInsertion::backToOperations,
-                                                                   [mainWindow, operationPageIndex]() {
-                                                                       mainWindow->setCurrentIndex(operationPageIndex);
-                                                                   });
+                                              // Connect back button to theory page
+                                              QObject::connect(currentOperationPage, &OperationPage::backToMenu,
+                                                               [mainWindow, theoryPageIndex]() {
+                                                                   mainWindow->setCurrentIndex(theoryPageIndex);
+                                                               });
 
-                                                  mainWindow->setCurrentIndex(visualizationPageIndex);
-                                              }
-                                              // TODO: Add other data structures and operations here
+                                              // Connect operation selection to visualization
+                                              QObject::connect(currentOperationPage, &OperationPage::operationSelected,
+                                                               [mainWindow, &currentTreeInsertion, &currentTreeDeletion,
+                                                                &currentHashMapVisualization, &currentRedBlackTree,
+                                                                &currentGraphVisualization, &visualizationPageIndex,
+                                                                &operationPageIndex, &currentDataStructure](const QString &operation) {
+                                                                   // Remove old visualization pages if exist
+                                                                   if (currentTreeInsertion) {
+                                                                       mainWindow->removeWidget(currentTreeInsertion);
+                                                                       currentTreeInsertion->deleteLater();
+                                                                       currentTreeInsertion = nullptr;
+                                                                   }
+                                                                   if (currentTreeDeletion) {
+                                                                       mainWindow->removeWidget(currentTreeDeletion);
+                                                                       currentTreeDeletion->deleteLater();
+                                                                       currentTreeDeletion = nullptr;
+                                                                   }
+                                                                   if (currentHashMapVisualization) {
+                                                                       mainWindow->removeWidget(currentHashMapVisualization);
+                                                                       currentHashMapVisualization->deleteLater();
+                                                                       currentHashMapVisualization = nullptr;
+                                                                   }
+                                                                   if (currentRedBlackTree) {
+                                                                       mainWindow->removeWidget(currentRedBlackTree);
+                                                                       currentRedBlackTree->deleteLater();
+                                                                       currentRedBlackTree = nullptr;
+                                                                   }
+                                                                   if (currentGraphVisualization) {
+                                                                       mainWindow->removeWidget(currentGraphVisualization);
+                                                                       currentGraphVisualization->deleteLater();
+                                                                       currentGraphVisualization = nullptr;
+                                                                   }
+
+                                                                   // Create appropriate visualization based on data structure and operation
+                                                                   if (currentDataStructure == "Binary Tree") {
+                                                                       if (operation == "Insertion") {
+                                                                           currentTreeInsertion = new TreeInsertion();
+                                                                           visualizationPageIndex = mainWindow->addWidget(currentTreeInsertion);
+
+                                                                           QObject::connect(currentTreeInsertion, &TreeInsertion::backToOperations,
+                                                                                            [mainWindow, operationPageIndex]() {
+                                                                                                mainWindow->setCurrentIndex(operationPageIndex);
+                                                                                            });
+
+                                                                           mainWindow->setCurrentIndex(visualizationPageIndex);
+                                                                       } else if (operation == "Deletion") {
+                                                                           currentTreeDeletion = new TreeDeletion();
+                                                                           visualizationPageIndex = mainWindow->addWidget(currentTreeDeletion);
+
+                                                                           QObject::connect(currentTreeDeletion, &TreeDeletion::backToOperations,
+                                                                                            [mainWindow, operationPageIndex]() {
+                                                                                                mainWindow->setCurrentIndex(operationPageIndex);
+                                                                                            });
+
+                                                                           mainWindow->setCurrentIndex(visualizationPageIndex);
+                                                                       }
+                                                                   } else if (currentDataStructure == "Red-Black Tree") {
+                                                                       // For Red-Black Tree, any operation opens the same page with all operations
+                                                                       currentRedBlackTree = new RedBlackTree();
+                                                                       visualizationPageIndex = mainWindow->addWidget(currentRedBlackTree);
+
+                                                                       QObject::connect(currentRedBlackTree, &RedBlackTree::backToOperations,
+                                                                                        [mainWindow, operationPageIndex]() {
+                                                                                            mainWindow->setCurrentIndex(operationPageIndex);
+                                                                                        });
+
+                                                                       mainWindow->setCurrentIndex(visualizationPageIndex);
+                                                                   } else if (currentDataStructure == "Hash Table") {
+                                                                       // For HashMap, any operation opens the same interactive visualization
+                                                                       currentHashMapVisualization = new HashMapVisualization();
+                                                                       visualizationPageIndex = mainWindow->addWidget(currentHashMapVisualization);
+
+                                                                       QObject::connect(currentHashMapVisualization, &HashMapVisualization::backToOperations,
+                                                                                        [mainWindow, operationPageIndex]() {
+                                                                                            mainWindow->setCurrentIndex(operationPageIndex);
+                                                                                        });
+
+                                                                       mainWindow->setCurrentIndex(visualizationPageIndex);
+                                                                   } else if (currentDataStructure == "Graph") {
+                                                                       // For Graph, any operation opens the comprehensive visualization
+                                                                       currentGraphVisualization = new GraphVisualization();
+                                                                       visualizationPageIndex = mainWindow->addWidget(currentGraphVisualization);
+
+                                                                       QObject::connect(currentGraphVisualization, &GraphVisualization::backToMenu,
+                                                                                        [mainWindow, operationPageIndex]() {
+                                                                                            mainWindow->setCurrentIndex(operationPageIndex);
+                                                                                        });
+
+                                                                       mainWindow->setCurrentIndex(visualizationPageIndex);
+                                                                   }
+                                                               });
+
+                                              // Show operation page
+                                              mainWindow->setCurrentIndex(operationPageIndex);
                                           });
 
-                         // Show operation page
-                         mainWindow->setCurrentIndex(operationPageIndex);
+                         // Show theory page
+                         mainWindow->setCurrentIndex(theoryPageIndex);
                      });
 
     // Center window on screen

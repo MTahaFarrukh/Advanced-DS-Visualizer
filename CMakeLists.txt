@@ -28,6 +28,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         operationpage.h operationpage.cpp
         treeinsertion.h treeinsertion.cpp
         graphvisualization.h graphvisualization.cpp
+        theorypage.h theorypage.cpp
+        treedeletion.h treedeletion.cpp
+        hashmap.h hashmap.cpp
+        hashmapvisualization.h hashmapvisualization.cpp
+        redblacktree.h redblacktree.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET AdvDS APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
