@@ -77,6 +77,8 @@ private:
     void fixInsert(RBNode* node);
     void rotateLeft(RBNode* node);
     void rotateRight(RBNode* node);
+    void rotateLeftSync(RBNode* node);  // Synchronous rotation for fixInsert
+    void rotateRightSync(RBNode* node); // Synchronous rotation for fixInsert
     RBNode* findNode(RBNode* node, int value);
     void fixDelete(RBNode* node);
     RBNode* findMin(RBNode* node);
